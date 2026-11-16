@@ -63,21 +63,21 @@ export const THEMES: Record<ThemeName, ThemeTokens> = {
     downvote: '#f87171',
     shadow: 'none',
   },
-  /** Inspired by lemmy.sdf.org / classic Lemmy dark clients. */
-  lemmy: {
-    name: 'lemmy',
-    label: 'Lemmy',
-    background: '#1a1d21',
-    surface: '#22262c',
-    surfaceAlt: '#2b3038',
-    border: '#3a4149',
-    text: '#e8eaed',
-    textMuted: '#9aa0a6',
-    accent: '#00bc8c',
-    accentContrast: '#0a0c0e',
-    upvote: '#00bc8c',
-    downvote: '#e74c3c',
-    shadow: '0 1px 3px rgba(0, 0, 0, 0.35)',
+  /** Warm brown paper — a richer sepia-style light theme. */
+  parchment: {
+    name: 'parchment',
+    label: 'Parchment',
+    background: '#efe6d8',
+    surface: '#e6d9c4',
+    surfaceAlt: '#dccdb4',
+    border: '#c9b490',
+    text: '#3d2f24',
+    textMuted: '#7a6554',
+    accent: '#9a5b2f',
+    accentContrast: '#fff8f0',
+    upvote: '#5d7a3a',
+    downvote: '#b54a3c',
+    shadow: '0 1px 2px rgba(61, 47, 36, 0.12)',
   },
 };
 
