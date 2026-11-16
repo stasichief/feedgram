@@ -18,9 +18,11 @@ export type FeedSource = 'default' | 'lemmy' | 'activitypub' | 'bluesky';
 
 export type ProxyMode = 'direct' | 'custom';
 
+/** A user-created Home tab that filters a set of explore sources. */
 export interface CustomTab {
   id: string;
   label: string;
+  /** Feed ids (explore source URLs) shown in this tab. */
   feedIds: string[];
 }
 
@@ -31,6 +33,7 @@ export interface Settings {
   lineWidth: LineWidth;
   pollIntervalMinutes: number;
   exploreFeedUrls: string[];
+  /** Extra Home tabs built from explore sources. */
   customTabs: CustomTab[];
   backgroundSync: boolean;
   proxyMode: ProxyMode;
@@ -41,50 +44,74 @@ export interface Settings {
   userAgentOverride: string;
   siteUrl: string;
   showComments: boolean;
-  /** Native (Tauri) only: accept self-signed / invalid TLS certificates. */
+  /**
+   * When true, native (Tauri) HTTP requests accept invalid TLS certificates
+   * (e.g. self-signed CORS proxies). Has no effect in the pure browser build.
+   */
   ignoreInvalidCerts: boolean;
 }
 
-export type FeedKind = 'rss' | 'atom' | 'json' | 'activitypub' | 'bluesky' | 'lemmy';
-
 export interface Feed {
+  /** Feed URL, used as the primary key. */
   id: string;
-  url: string;
   title: string;
+  /** Homepage of the site the feed belongs to. */
   siteUrl?: string;
   icon?: string;
-  kind?: FeedKind;
-  source?: FeedSource;
-  subscribed: boolean;
+  /** Subscription date (epoch ms). */
+  addedAt: number;
   lastFetchedAt?: number;
-  error?: string;
-  /** Optional community / actor handle for non-RSS sources. */
-  handle?: string;
+  lastError?: string;
+  etag?: string;
+  lastModified?: string;
+  /** Optional user-supplied JSON endpoint that returns comments for a post. */
+  commentEndpoint?: string;
+  /** Detected source kind, used for comment endpoints + posting. */
+  kind?: FeedKind;
+  /** Which remote API this feed is read through. */
+  source?: FeedSource;
+  /** True for the discovery feeds shown on the Explore page. */
+  explore?: boolean;
 }
 
+export type FeedKind =
+  | 'generic'
+  | 'mastodon'
+  | 'lemmy'
+  | 'wordpress'
+  | 'activitypub'
+  | 'bluesky';
+
 export interface Post {
+  /** Stable id derived from the feed id + guid/link. */
   id: string;
   feedId: string;
   title: string;
   url: string;
+  excerpt: string;
   author?: string;
-  publishedAt?: number;
-  summary?: string;
+  publishedAt: number;
+  thumbnail?: string;
+  /** Remote comments count when the feed provides one. */
+  commentCount?: number;
+  /** Remote score when the feed provides one. */
+  score?: number;
+  /** Identifier used against the remote comments endpoint. */
+  remoteId?: string;
+  /** Full content when the feed embeds it (Atom content / JSON Feed content). */
   contentHtml?: string;
-  /** True when contentHtml is the complete body (no Readability extraction). */
+  /** True when `contentHtml` is the complete post and must not be re-extracted. */
   inline?: boolean;
-  image?: string;
   read: boolean;
   saved: boolean;
-  remoteId?: string;
-  score?: number;
-  commentCount?: number;
+  /** -1, 0 or 1. */
+  vote: -1 | 0 | 1;
 }
 
 export interface Article {
   postId: string;
-  url: string;
   title: string;
+  /** Sanitized HTML extracted with Readability. */
   html: string;
   text: string;
   byline?: string;
@@ -94,22 +121,39 @@ export interface Article {
   fetchedAt: number;
 }
 
+export interface Comment {
+  id: string;
+  postId: string;
+  author: string;
+  body: string;
+  createdAt?: number;
+  score?: number;
+  depth: number;
+  /** Profile URL of the author, when the platform exposes it. */
+  authorUrl?: string;
+  /** Platform handle (e.g. `@user@host`), when available. */
+  authorHandle?: string;
+  replies?: Comment[];
+}
+
 export type AuthMethod =
-  | 'none'
+  | 'micropub'
   | 'mastodon'
   | 'wordpress'
-  | 'lemmy'
   | 'bluesky'
-  | 'generic';
+  | 'lemmy';
 
 export interface AuthSession {
   method: AuthMethod;
+  /** Human readable account label. */
   account: string;
+  /** Instance / site base URL. */
   endpoint?: string;
   accessToken?: string;
-  tokenType?: string;
-  scope?: string;
   refreshToken?: string;
+  tokenType?: string;
+  expiresAt?: number;
+  scope?: string;
   /** Raw username/password style credentials (WordPress app password). */
   username?: string;
   extra?: Record<string, unknown>;
