@@ -50,37 +50,46 @@ export class TopBar extends Component<TopBarProps> {
             <span class="hidden sm:inline">feedgram</span>
           </Link>
 
-          <div class="relative min-w-0 flex-1">
+          <div class="relative flex-1 max-w-xl">
             <span class="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-fg-muted">
               <Icon node={ICONS.search} size={16} />
             </span>
             <input
               type="search"
               value={searchQuery}
-              placeholder="Search posts or paste a feed URL…"
-              class="w-full rounded-lg border border-border bg-surface py-2 pl-9 pr-3 text-sm text-fg outline-none placeholder:text-fg-muted focus:border-accent focus:ring-2 focus:ring-accent/30"
+              placeholder="Search posts, or paste a feed URL…"
+              class={[
+                'w-full rounded-lg border border-border bg-surface py-2 pl-9 pr-3',
+                'text-sm text-fg outline-none placeholder:text-fg-muted',
+                'focus:border-accent focus:ring-2 focus:ring-accent/30',
+              ].join(' ')}
               onInput={(event: Event) =>
                 onSearch((event.target as HTMLInputElement).value)
               }
+              onKeyDown={(event: KeyboardEvent) => {
+                if (event.key === 'Enter') {
+                  event.preventDefault();
+                }
+              }}
             />
           </div>
 
           {syncing ? (
-            <span class="hidden sm:inline-flex items-center text-fg-muted" title="Syncing">
+            <span class="hidden sm:inline-flex items-center text-fg-muted">
               <Icon node={ICONS.loader} size={16} className="spin" />
             </span>
           ) : null}
 
           <button
             type="button"
-            class={
+            class={[
+              'inline-flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium',
               canCreate
-                ? 'inline-flex items-center gap-1.5 rounded-lg bg-accent px-3 py-2 text-sm font-medium text-accent-contrast hover:opacity-90'
-                : 'inline-flex items-center gap-1.5 rounded-lg border border-border px-3 py-2 text-sm text-fg-muted'
-            }
+                ? 'bg-accent text-accent-contrast hover:opacity-90'
+                : 'bg-surface text-fg-muted border border-border',
+            ].join(' ')}
             onClick={onCreate}
-            disabled={!canCreate}
-            title={canCreate ? 'Create post' : 'Sign in to create posts'}
+            title={canCreate ? 'Create a post' : 'Sign in to create a post'}
           >
             <Icon node={ICONS.plus} size={16} />
             <span class="hidden sm:inline">Create</span>
