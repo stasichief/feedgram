@@ -14,6 +14,7 @@ export interface NavEntry {
 export const PRIMARY_NAV: NavEntry[] = [
   { to: '/', label: 'Home', icon: 'house', exact: true },
   { to: '/feeds', label: 'Subscribed Feeds', icon: 'rss' },
+  { to: '/bookmarks', label: 'Bookmarks', icon: 'bookmark' },
   { to: '/all', label: 'All', icon: 'globe' },
 ];
 
@@ -54,7 +55,15 @@ export class LeftNav extends Component<LeftNavProps> {
               exact={entry.exact}
               className="flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-sm text-fg hover:bg-surface-alt"
               activeClassName="bg-surface-alt font-semibold text-accent"
-              onClick={onNavigate}
+              onClick={() => {
+                if (entry.to === '/') {
+                  // Always bring the feed back to the top when Home is clicked.
+                  window.scrollTo({ top: 0, behavior: 'smooth' });
+                  const main = document.querySelector('main');
+                  if (main) main.scrollTo({ top: 0, behavior: 'smooth' });
+                }
+                onNavigate?.();
+              }}
             >
               <Icon node={ICONS[entry.icon]} size={17} />
               <span class="truncate">{entry.label}</span>

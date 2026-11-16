@@ -63,6 +63,22 @@ export const THEMES: Record<ThemeName, ThemeTokens> = {
     downvote: '#f87171',
     shadow: 'none',
   },
+  /** Inspired by lemmy.sdf.org / classic Lemmy dark clients. */
+  lemmy: {
+    name: 'lemmy',
+    label: 'Lemmy',
+    background: '#1a1d21',
+    surface: '#22262c',
+    surfaceAlt: '#2b3038',
+    border: '#3a4149',
+    text: '#e8eaed',
+    textMuted: '#9aa0a6',
+    accent: '#00bc8c',
+    accentContrast: '#0a0c0e',
+    upvote: '#00bc8c',
+    downvote: '#e74c3c',
+    shadow: '0 1px 3px rgba(0, 0, 0, 0.35)',
+  },
 };
 
 export const FONT_STACKS: Record<FontFamily, string> = {
