@@ -47,9 +47,15 @@ function readStoredSettings(): Settings {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) return { ...DEFAULT_SETTINGS };
     const parsed = JSON.parse(raw) as Partial<Settings>;
+    // Lemmy theme was removed; map any saved choice onto Parchment.
+    const theme =
+      (parsed.theme as string | undefined) === 'lemmy'
+        ? 'parchment'
+        : parsed.theme;
     return {
       ...DEFAULT_SETTINGS,
       ...parsed,
+      theme: (theme as Settings['theme']) ?? DEFAULT_SETTINGS.theme,
       exploreFeedUrls: Array.isArray(parsed.exploreFeedUrls)
         ? parsed.exploreFeedUrls
         : DEFAULT_SETTINGS.exploreFeedUrls,

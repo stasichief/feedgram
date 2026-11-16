@@ -2,7 +2,7 @@ import { Component } from 'inferno';
 import { THEMES } from '../../styles/themes';
 import type { ThemeName } from '../../lib/types';
 
-const THEME_ORDER: ThemeName[] = ['light', 'sepia', 'oled', 'lemmy'];
+const THEME_ORDER: ThemeName[] = ['light', 'sepia', 'parchment', 'oled'];
 
 export interface ThemePickerProps {
   value: ThemeName;
