@@ -117,6 +117,7 @@ export class Settings extends Component<SettingsPageProps> {
               proxyRetries={settings.proxyRetries}
               userAgentOverride={settings.userAgentOverride}
               siteUrl={settings.siteUrl}
+              ignoreInvalidCerts={settings.ignoreInvalidCerts}
               onProxyMode={(proxyMode: ProxyMode) => this.update({ proxyMode })}
               onProxyUrl={(proxyUrl) => this.update({ proxyUrl })}
               onProxyHeaders={(proxyHeaders) => this.update({ proxyHeaders })}
@@ -124,6 +125,9 @@ export class Settings extends Component<SettingsPageProps> {
               onRetries={(proxyRetries) => this.update({ proxyRetries })}
               onUserAgent={(userAgentOverride) => this.update({ userAgentOverride })}
               onSiteUrl={(siteUrl) => this.update({ siteUrl })}
+              onIgnoreInvalidCerts={(ignoreInvalidCerts) =>
+                this.update({ ignoreInvalidCerts })
+              }
             />
           </Section>
 

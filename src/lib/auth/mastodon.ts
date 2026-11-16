@@ -122,12 +122,37 @@ export class MastodonProvider extends BaseProvider {
     };
   }
 
-  async publish(session: AuthSession, status: string, inReplyToId?: string): Promise<void> {
+  async publish(
+    session: AuthSession,
+    status: string,
+    inReplyToId?: string,
+    mediaIds?: string[],
+  ): Promise<void> {
     if (!session.accessToken || !session.endpoint) throw new Error('Not connected to Mastodon');
     await fetchJson(`${session.endpoint}/api/v1/statuses`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session.accessToken}` },
-      body: JSON.stringify({ status, in_reply_to_id: inReplyToId, visibility: 'public' }),
+      body: JSON.stringify({
+        status,
+        in_reply_to_id: inReplyToId,
+        visibility: 'public',
+        media_ids: mediaIds && mediaIds.length ? mediaIds : undefined,
+      }),
     });
+  }
+
+  /** Upload an image to the Mastodon instance; returns the media id. */
+  async uploadMedia(session: AuthSession, file: File): Promise<string> {
+    if (!session.accessToken || !session.endpoint) throw new Error('Not connected to Mastodon');
+    const form = new FormData();
+    form.append('file', file);
+    const result = await fetchJson<{ id: string }>(`${session.endpoint}/api/v2/media`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${session.accessToken}` },
+      body: form,
+      useProxy: false,
+    });
+    if (!result.id) throw new Error('Mastodon media upload returned no id');
+    return result.id;
   }
 }

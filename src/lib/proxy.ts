@@ -141,7 +141,9 @@ export async function proxyFetch(
           url: relay.url ?? url,
         };
       }
-      const init: RequestInit = {
+      const init: RequestInit & {
+        danger?: { acceptInvalidCerts?: boolean; acceptInvalidHostnames?: boolean };
+      } = {
         method: options.method ?? 'GET',
         headers,
         body: options.body ?? null,
@@ -149,6 +151,10 @@ export async function proxyFetch(
         credentials: 'omit',
         redirect: 'follow',
       };
+      // Native only: honour "Ignore invalid TLS certificates" for self-signed CORS proxies.
+      if (isNativeApp() && settings.ignoreInvalidCerts) {
+        init.danger = { acceptInvalidCerts: true, acceptInvalidHostnames: false };
+      }
       const response = isNativeApp()
         ? await (await import('@tauri-apps/plugin-http')).fetch(url, init)
         : await fetch(url, init);
