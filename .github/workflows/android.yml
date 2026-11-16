@@ -64,6 +64,60 @@ jobs:
           fi
           chmod +x src-tauri/gen/android/gradlew
 
+      
+      # Configure release builds to use the automatically generated
+      # Android debug signing key (testing only).
+      - name: Configure release APK signing
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+
+          gradle_file = Path(
+              "src-tauri/gen/android/app/build.gradle.kts"
+          )
+
+          if not gradle_file.exists():
+              raise SystemExit(f"Missing Gradle file: {gradle_file}")
+
+          content = gradle_file.read_text()
+
+          pattern = re.compile(
+              r'^([ \t]*)getByName\("release"\)\s*\{',
+              re.MULTILINE
+          )
+
+          match = pattern.search(content)
+
+          if not match:
+              raise SystemExit(
+                  "Could not find release build configuration in Gradle file."
+              )
+
+          signing_line = (
+              match.group(1)
+              + '    signingConfig = signingConfigs.getByName("debug")'
+          )
+
+          # Avoid inserting the configuration twice.
+          if signing_line not in content:
+              newline = content.find("\n", match.end())
+
+              if newline == -1:
+                  raise SystemExit("Unexpected Gradle file format.")
+
+              content = (
+                  content[:newline + 1]
+                  + signing_line + "\n"
+                  + content[newline + 1:]
+              )
+
+              gradle_file.write_text(content)
+
+          print("Release APK will use debug signing for testing.")
+          PY
+
       - name: Generate Tauri application icons
         run: npx tauri icon src-tauri/app-icon.png
 
