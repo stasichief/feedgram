@@ -71,6 +71,18 @@ export class FeedPage extends Component<FeedPageProps> {
 
     void markRead(post.id, true);
     this.overrides.set(post.id, { ...this.overrides.get(post.id), read: true });
+
+    // Keep the expanded card in view instead of jumping to the bottom of the list.
+    requestAnimationFrame(() => {
+      const nodes = document.querySelectorAll('[data-post-id]');
+      for (let i = 0; i < nodes.length; i += 1) {
+        const node = nodes[i] as HTMLElement;
+        if (node.getAttribute('data-post-id') === post.id) {
+          node.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+          break;
+        }
+      }
+    });
   }
 
   private collapseExpanded(): void {
@@ -153,6 +165,7 @@ export class FeedPage extends Component<FeedPageProps> {
         publishedAt: post.publishedAt,
         feedTitle: feedTitles.get(post.feedId) ?? 'Unknown feed',
         feedId: post.feedId,
+        feedIcon: feed?.icon,
         thumbnail: post.thumbnail,
         score: post.score,
         commentCount: post.commentCount,
@@ -195,7 +208,7 @@ export class FeedPage extends Component<FeedPageProps> {
         ) : (
           <div class="flex flex-col">
             {cards.map((card) => (
-              <div key={card.id}>
+              <div key={card.id} data-post-id={card.id}>
                 <PostCard {...card} />
 
                 {/* The article opens directly underneath its own card. */}

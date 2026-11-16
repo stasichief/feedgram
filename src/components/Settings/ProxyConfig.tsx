@@ -10,6 +10,7 @@ export interface ProxyConfigProps {
   proxyRetries: number;
   userAgentOverride: string;
   siteUrl: string;
+  ignoreInvalidCerts: boolean;
   onProxyMode: (mode: ProxyMode) => void;
   onProxyUrl: (url: string) => void;
   onProxyHeaders: (headers: Record<string, string>) => void;
@@ -17,6 +18,7 @@ export interface ProxyConfigProps {
   onRetries: (count: number) => void;
   onUserAgent: (value: string) => void;
   onSiteUrl: (value: string) => void;
+  onIgnoreInvalidCerts: (value: boolean) => void;
 }
 
 interface HeaderRow {
@@ -43,6 +45,7 @@ export class ProxyConfig extends Component<ProxyConfigProps> {
       proxyRetries,
       userAgentOverride,
       siteUrl,
+      ignoreInvalidCerts,
       onProxyMode,
       onProxyUrl,
       onProxyHeaders,
@@ -50,6 +53,7 @@ export class ProxyConfig extends Component<ProxyConfigProps> {
       onRetries,
       onUserAgent,
       onSiteUrl,
+      onIgnoreInvalidCerts,
     } = this.props;
 
     const modes: Array<{ value: ProxyMode; label: string }> = [
@@ -179,6 +183,29 @@ export class ProxyConfig extends Component<ProxyConfigProps> {
                   onInput={onUserAgent}
                 />
               </Field>
+
+              <div class="flex flex-col gap-1.5">
+                <label class="flex items-start gap-2.5 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    class="mt-0.5 h-4 w-4 rounded border-border text-accent"
+                    checked={ignoreInvalidCerts}
+                    onChange={(e: Event) =>
+                      onIgnoreInvalidCerts((e.target as HTMLInputElement).checked)
+                    }
+                  />
+                  <span>
+                    <span class="block text-sm font-medium text-fg">
+                      Ignore invalid TLS certificates
+                    </span>
+                    <span class="block text-xs text-fg-muted">
+                      Accept self-signed or untrusted certificates on the CORS
+                      proxy. Only applies in the native (Tauri) app — browsers
+                      always enforce certificate validation.
+                    </span>
+                  </span>
+                </label>
+              </div>
 
               <div class="flex flex-col gap-2">
                 <span class="text-sm font-medium text-fg">Custom headers</span>

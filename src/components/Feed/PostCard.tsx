@@ -36,6 +36,8 @@ export interface PostCardProps {
   publishedAt: number;
   feedTitle: string;
   feedId: string;
+  /** Optional feed/site favicon (small square). Omitted when missing. */
+  feedIcon?: string;
   thumbnail?: string;
   score?: number;
   commentCount?: number;
@@ -68,6 +70,7 @@ export class PostCard extends Component<PostCardProps> {
       excerpt,
       publishedAt,
       feedTitle,
+      feedIcon,
       thumbnail,
       score,
       commentCount,
@@ -155,6 +158,16 @@ export class PostCard extends Component<PostCardProps> {
                 </button>
 
                 <div class="mt-1 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-fg-muted">
+                  {feedIcon ? (
+                    <img
+                      src={feedIcon}
+                      alt=""
+                      width={14}
+                      height={14}
+                      class="h-3.5 w-3.5 shrink-0 rounded-sm object-cover"
+                      loading="lazy"
+                    />
+                  ) : null}
                   <span class="font-medium text-fg-muted">{feedTitle}</span>
                   {domain ? (
                     <>
