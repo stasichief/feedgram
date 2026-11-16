@@ -3,6 +3,7 @@ import { HashRouter, Route, Switch } from 'inferno-router';
 import { ThreePane } from './components/Layout/ThreePane';
 import { Home } from './pages/Home';
 import { All } from './pages/All';
+import { Bookmarks } from './pages/Bookmarks';
 import { Feeds } from './pages/Feeds';
 import { Settings } from './pages/Settings';
 import { Profile } from './pages/Profile';
@@ -440,6 +441,22 @@ export class App extends Component<Record<string, never>, AppState> {
                   feeds={subscribedFeeds}
                   loading={loading}
                   onRefresh={() => void this.refresh('subscribed')}
+                  onFeedsChanged={this.handleFeedsChanged}
+                />
+              )}
+            />
+            <Route
+              exact
+              path="/bookmarks"
+              render={() => (
+                <Bookmarks
+                  sort={sort}
+                  onSort={this.handleSort}
+                  posts={this.filterPosts(posts.filter((post) => post.saved))}
+                  feeds={feeds}
+                  loading={loading}
+                  error={error}
+                  showComments={settings.showComments}
                   onFeedsChanged={this.handleFeedsChanged}
                 />
               )}

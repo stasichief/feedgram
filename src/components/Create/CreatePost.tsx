@@ -22,14 +22,46 @@ interface Target {
   label: string;
   supportsTitle: boolean;
   supportsTags: boolean;
+  /** Native media upload (currently Mastodon only). */
+  supportsMediaUpload: boolean;
 }
 
 const TARGETS: Target[] = [
-  { method: 'mastodon', label: 'Mastodon', supportsTitle: false, supportsTags: true },
-  { method: 'lemmy', label: 'Lemmy', supportsTitle: true, supportsTags: false },
-  { method: 'bluesky', label: 'Bluesky', supportsTitle: false, supportsTags: true },
-  { method: 'wordpress', label: 'WordPress', supportsTitle: true, supportsTags: true },
-  { method: 'micropub', label: 'Micropub', supportsTitle: true, supportsTags: true },
+  {
+    method: 'mastodon',
+    label: 'Mastodon',
+    supportsTitle: false,
+    supportsTags: true,
+    supportsMediaUpload: true,
+  },
+  {
+    method: 'lemmy',
+    label: 'Lemmy',
+    supportsTitle: true,
+    supportsTags: false,
+    supportsMediaUpload: false,
+  },
+  {
+    method: 'bluesky',
+    label: 'Bluesky',
+    supportsTitle: false,
+    supportsTags: true,
+    supportsMediaUpload: false,
+  },
+  {
+    method: 'wordpress',
+    label: 'WordPress',
+    supportsTitle: true,
+    supportsTags: true,
+    supportsMediaUpload: false,
+  },
+  {
+    method: 'micropub',
+    label: 'Micropub',
+    supportsTitle: true,
+    supportsTags: true,
+    supportsMediaUpload: false,
+  },
 ];
 
 /** Compose and publish a post to a connected account. */
@@ -43,6 +75,8 @@ export class CreatePost extends Component<CreatePostProps> {
   private busy = false;
   private message = '';
   private error = '';
+  /** Local files staged for Mastodon media upload. */
+  private pendingFiles: File[] = [];
 
   componentDidMount(): void {
     if (!this.target && this.props.sessions.length > 0) {
@@ -52,6 +86,56 @@ export class CreatePost extends Component<CreatePostProps> {
 
   private currentTarget(): Target | undefined {
     return TARGETS.find((target) => target.method === this.target);
+  }
+
+  /** Insert Markdown around the current selection (or at the cursor). */
+  private insertMarkdown(prefix: string, suffix = '', placeholder = ''): void {
+    const el = document.getElementById('create-body') as HTMLTextAreaElement | null;
+    if (!el) {
+      this.body = `${this.body}${prefix}${placeholder}${suffix}`;
+      this.forceUpdate();
+      return;
+    }
+    const start = el.selectionStart ?? this.body.length;
+    const end = el.selectionEnd ?? this.body.length;
+    const hadSelection = end > start;
+    const selected = this.body.slice(start, end) || placeholder;
+    const next =
+      this.body.slice(0, start) + prefix + selected + suffix + this.body.slice(end);
+    this.body = next;
+    this.forceUpdate();
+    requestAnimationFrame(() => {
+      el.focus();
+      if (hadSelection) {
+        el.setSelectionRange(
+          start + prefix.length,
+          start + prefix.length + selected.length,
+        );
+      } else {
+        const cursor = start + prefix.length + selected.length + suffix.length;
+        el.setSelectionRange(cursor, cursor);
+      }
+    });
+  }
+
+  private insertImageByUrl(): void {
+    const url = window.prompt('Image URL');
+    if (!url || !url.trim()) return;
+    this.insertMarkdown(`\n![image](${url.trim()})\n`);
+  }
+
+  private onPickFiles = (event: Event): void => {
+    const input = event.target as HTMLInputElement;
+    const files = input.files ? Array.from(input.files) : [];
+    if (files.length === 0) return;
+    this.pendingFiles = [...this.pendingFiles, ...files].slice(0, 4);
+    this.forceUpdate();
+    input.value = '';
+  };
+
+  private removePendingFile(index: number): void {
+    this.pendingFiles = this.pendingFiles.filter((_, i) => i !== index);
+    this.forceUpdate();
   }
 
   private async publish(): Promise<void> {
@@ -72,7 +156,7 @@ export class CreatePost extends Component<CreatePostProps> {
       .map((tag) => tag.replace(/^#/, ''))
       .filter(Boolean);
 
-    if (!body && !title) {
+    if (!body && !title && this.pendingFiles.length === 0) {
       this.error = 'Write something before publishing.';
       this.forceUpdate();
       return;
@@ -86,13 +170,21 @@ export class CreatePost extends Component<CreatePostProps> {
     try {
       switch (session.method) {
         case 'mastodon': {
+          let mediaIds: string[] | undefined;
+          if (this.pendingFiles.length > 0) {
+            mediaIds = [];
+            for (const file of this.pendingFiles) {
+              const id = await mastodonProvider.uploadMedia(session, file);
+              mediaIds.push(id);
+            }
+          }
           const statusText = target?.supportsTitle
             ? `${title}\n\n${body}`
             : body;
           const text = tags.length
             ? `${statusText}\n\n${tags.map((tag) => `#${tag}`).join(' ')}`
             : statusText;
-          await mastodonProvider.publish(session, text);
+          await mastodonProvider.publish(session, text, undefined, mediaIds);
           break;
         }
         case 'lemmy': {
@@ -128,6 +220,7 @@ export class CreatePost extends Component<CreatePostProps> {
       this.title = '';
       this.body = '';
       this.tags = '';
+      this.pendingFiles = [];
     } catch (error) {
       this.error = error instanceof Error ? error.message : 'Publishing failed.';
     } finally {
@@ -191,17 +284,98 @@ export class CreatePost extends Component<CreatePostProps> {
             </Field>
           ) : null}
 
-          <Field label="Content" htmlFor="create-body">
+          <div class="flex flex-col gap-1.5">
+            <span class="text-sm font-medium text-fg">Body</span>
+            {/* Markdown toolbar */}
+            <div class="flex flex-wrap items-center gap-1 rounded-t-lg border border-b-0 border-border bg-surface-alt px-1.5 py-1">
+              <ToolbarBtn
+                label="Bold"
+                title="Bold (**text**)"
+                onClick={() => this.insertMarkdown('**', '**', 'bold')}
+              >
+                <span class="font-bold">B</span>
+              </ToolbarBtn>
+              <ToolbarBtn
+                label="Italic"
+                title="Italic (*text*)"
+                onClick={() => this.insertMarkdown('*', '*', 'italic')}
+              >
+                <span class="italic">I</span>
+              </ToolbarBtn>
+              <ToolbarBtn
+                label="Link"
+                title="Link"
+                onClick={() => this.insertMarkdown('[', '](https://)', 'text')}
+              >
+                <Icon node={ICONS.link} size={14} />
+              </ToolbarBtn>
+              <ToolbarBtn
+                label="Image URL"
+                title="Insert image by URL"
+                onClick={() => this.insertImageByUrl()}
+              >
+                <Icon node={ICONS.externalLink} size={14} />
+              </ToolbarBtn>
+              {target?.supportsMediaUpload ? (
+                <label
+                  class="inline-flex cursor-pointer items-center gap-1 rounded px-1.5 py-1 text-xs text-fg-muted hover:bg-surface hover:text-fg"
+                  title="Upload image (Mastodon)"
+                >
+                  <Icon node={ICONS.upload} size={14} />
+                  <span>Image</span>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    multiple
+                    class="hidden"
+                    onChange={this.onPickFiles}
+                  />
+                </label>
+              ) : null}
+              <span class="ml-auto px-1 text-[10px] uppercase tracking-wide text-fg-muted">
+                Markdown
+              </span>
+            </div>
             <TextArea
               id="create-body"
-              rows={8}
               value={this.body}
-              placeholder="Write your post…"
+              rows={8}
+              placeholder="Write in Markdown…"
               onInput={(value) => {
                 this.body = value;
               }}
             />
-          </Field>
+            {this.pendingFiles.length > 0 ? (
+              <ul class="mt-1 flex flex-col gap-1">
+                {this.pendingFiles.map((file, index) => (
+                  <li
+                    key={`${file.name}-${index}`}
+                    class="flex items-center gap-2 rounded-lg border border-border bg-bg px-2.5 py-1.5 text-xs text-fg"
+                  >
+                    <Icon node={ICONS.upload} size={12} />
+                    <span class="min-w-0 flex-1 truncate">{file.name}</span>
+                    <button
+                      type="button"
+                      class="text-fg-muted hover:text-downvote"
+                      onClick={() => this.removePendingFile(index)}
+                    >
+                      Remove
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            ) : null}
+            {!target?.supportsMediaUpload ? (
+              <p class="text-xs text-fg-muted">
+                Images: use the toolbar to insert a Markdown image by URL. File
+                upload is available when posting to Mastodon.
+              </p>
+            ) : (
+              <p class="text-xs text-fg-muted">
+                Up to 4 images can be uploaded with the post on Mastodon.
+              </p>
+            )}
+          </div>
 
           {this.target === 'lemmy' ? (
             <Field
@@ -289,4 +463,23 @@ export class CreatePost extends Component<CreatePostProps> {
       </div>
     );
   }
+}
+
+function ToolbarBtn(props: {
+  label: string;
+  title: string;
+  onClick: () => void;
+  children?: unknown;
+}) {
+  return (
+    <button
+      type="button"
+      class="inline-flex h-7 min-w-[1.75rem] items-center justify-center rounded px-1.5 text-xs text-fg-muted hover:bg-surface hover:text-fg"
+      title={props.title}
+      aria-label={props.label}
+      onClick={props.onClick}
+    >
+      {props.children as never}
+    </button>
+  );
 }
