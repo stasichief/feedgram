@@ -1,0 +1,104 @@
+import type { IconNode } from './Icon';
+import Search from 'lucide/dist/esm/icons/search.mjs';
+import Settings from 'lucide/dist/esm/icons/settings.mjs';
+import Compass from 'lucide/dist/esm/icons/compass.mjs';
+import Globe from 'lucide/dist/esm/icons/globe.mjs';
+import Rss from 'lucide/dist/esm/icons/rss.mjs';
+import List from 'lucide/dist/esm/icons/list.mjs';
+import TrendingUp from 'lucide/dist/esm/icons/trending-up.mjs';
+import Info from 'lucide/dist/esm/icons/info.mjs';
+import Plus from 'lucide/dist/esm/icons/plus.mjs';
+import User from 'lucide/dist/esm/icons/user.mjs';
+import ChevronUp from 'lucide/dist/esm/icons/chevron-up.mjs';
+import ChevronDown from 'lucide/dist/esm/icons/chevron-down.mjs';
+import MessageCircle from 'lucide/dist/esm/icons/message-circle.mjs';
+import Bookmark from 'lucide/dist/esm/icons/bookmark.mjs';
+import BookmarkCheck from 'lucide/dist/esm/icons/bookmark-check.mjs';
+import ExternalLink from 'lucide/dist/esm/icons/external-link.mjs';
+import BookOpen from 'lucide/dist/esm/icons/book-open.mjs';
+import Menu from 'lucide/dist/esm/icons/menu.mjs';
+import X from 'lucide/dist/esm/icons/x.mjs';
+import RefreshCw from 'lucide/dist/esm/icons/refresh-cw.mjs';
+import LoaderCircle from 'lucide/dist/esm/icons/loader-circle.mjs';
+import Download from 'lucide/dist/esm/icons/download.mjs';
+import Upload from 'lucide/dist/esm/icons/upload.mjs';
+import Link from 'lucide/dist/esm/icons/link.mjs';
+import LogOut from 'lucide/dist/esm/icons/log-out.mjs';
+import Check from 'lucide/dist/esm/icons/check.mjs';
+import Pencil from 'lucide/dist/esm/icons/pencil.mjs';
+import FileText from 'lucide/dist/esm/icons/file-text.mjs';
+import Shield from 'lucide/dist/esm/icons/shield.mjs';
+import Clock from 'lucide/dist/esm/icons/clock.mjs';
+import WifiOff from 'lucide/dist/esm/icons/wifi-off.mjs';
+import CircleCheck from 'lucide/dist/esm/icons/circle-check.mjs';
+import House from 'lucide/dist/esm/icons/house.mjs';
+import Inbox from 'lucide/dist/esm/icons/inbox.mjs';
+import Hash from 'lucide/dist/esm/icons/hash.mjs';
+import Share2 from 'lucide/dist/esm/icons/share-2.mjs';
+import Eye from 'lucide/dist/esm/icons/eye.mjs';
+import Flame from 'lucide/dist/esm/icons/flame.mjs';
+import Star from 'lucide/dist/esm/icons/star.mjs';
+import SquarePen from 'lucide/dist/esm/icons/square-pen.mjs';
+import Trash from 'lucide/dist/esm/icons/trash.mjs';
+import TriangleExclamationPoint from 'lucide/dist/esm/icons/triangle-exclamation-point.mjs';
+import SlidersHorizontal from 'lucide/dist/esm/icons/sliders-horizontal.mjs';
+import FolderOpen from 'lucide/dist/esm/icons/folder-open.mjs';
+import AtSign from 'lucide/dist/esm/icons/at-sign.mjs';
+import KeyRound from 'lucide/dist/esm/icons/key-round.mjs';
+import Send from 'lucide/dist/esm/icons/send.mjs';
+import Database from 'lucide/dist/esm/icons/database.mjs';
+import Save from 'lucide/dist/esm/icons/save.mjs';
+
+export const ICONS = {
+  search: Search as IconNode,
+  settings: Settings as IconNode,
+  compass: Compass as IconNode,
+  globe: Globe as IconNode,
+  rss: Rss as IconNode,
+  list: List as IconNode,
+  trendingUp: TrendingUp as IconNode,
+  info: Info as IconNode,
+  plus: Plus as IconNode,
+  user: User as IconNode,
+  chevronUp: ChevronUp as IconNode,
+  chevronDown: ChevronDown as IconNode,
+  messageCircle: MessageCircle as IconNode,
+  bookmark: Bookmark as IconNode,
+  bookmarkCheck: BookmarkCheck as IconNode,
+  externalLink: ExternalLink as IconNode,
+  bookOpen: BookOpen as IconNode,
+  menu: Menu as IconNode,
+  x: X as IconNode,
+  refreshCw: RefreshCw as IconNode,
+  loader: LoaderCircle as IconNode,
+  download: Download as IconNode,
+  upload: Upload as IconNode,
+  link: Link as IconNode,
+  logOut: LogOut as IconNode,
+  check: Check as IconNode,
+  pencil: Pencil as IconNode,
+  fileText: FileText as IconNode,
+  shield: Shield as IconNode,
+  clock: Clock as IconNode,
+  wifiOff: WifiOff as IconNode,
+  circleCheck: CircleCheck as IconNode,
+  house: House as IconNode,
+  inbox: Inbox as IconNode,
+  hash: Hash as IconNode,
+  share: Share2 as IconNode,
+  eye: Eye as IconNode,
+  flame: Flame as IconNode,
+  star: Star as IconNode,
+  squarePen: SquarePen as IconNode,
+  trash: Trash as IconNode,
+  alert: TriangleExclamationPoint as IconNode,
+  sliders: SlidersHorizontal as IconNode,
+  folderOpen: FolderOpen as IconNode,
+  atSign: AtSign as IconNode,
+  key: KeyRound as IconNode,
+  send: Send as IconNode,
+  database: Database as IconNode,
+  save: Save as IconNode,
+} as const;
+
+export type IconName = keyof typeof ICONS;
