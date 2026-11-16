@@ -1,0 +1,54 @@
+name: Build and deploy Feedgram PWA
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: github-pages
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Type-check
+        run: npm run typecheck
+
+      # The repository is published at /feedgram/ on GitHub Pages.
+      # This overrides vite.config.ts's relative base for the web build only.
+      - name: Build web PWA
+        run: npm run build -- --base=/feedgram/
+
+      - name: Configure GitHub Pages
+        uses: actions/configure-pages@v6
+
+      - name: Upload website artifact
+        uses: actions/upload-pages-artifact@v5
+        with:
+          path: dist
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v5
