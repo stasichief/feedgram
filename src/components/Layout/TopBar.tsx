@@ -28,7 +28,7 @@ export class TopBar extends Component<TopBarProps> {
     } = this.props;
 
     return (
-      <header class="sticky top-0 z-30 border-b border-border bg-bg/95 backdrop-blur supports-[backdrop-filter]:bg-bg/80">
+      <header class="sticky top-0 z-30 border-b border-border bg-bg/95 backdrop-blur supports-[backdrop-filter]:bg-bg/80 pt-[env(safe-area-inset-top,0px)]">
         <div class="mx-auto flex h-14 max-w-[1600px] items-center gap-3 px-3 sm:px-4">
           <button
             type="button"
@@ -50,46 +50,37 @@ export class TopBar extends Component<TopBarProps> {
             <span class="hidden sm:inline">feedgram</span>
           </Link>
 
-          <div class="relative flex-1 max-w-xl">
+          <div class="relative min-w-0 flex-1">
             <span class="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-fg-muted">
               <Icon node={ICONS.search} size={16} />
             </span>
             <input
               type="search"
               value={searchQuery}
-              placeholder="Search posts, or paste a feed URL…"
-              class={[
-                'w-full rounded-lg border border-border bg-surface py-2 pl-9 pr-3',
-                'text-sm text-fg outline-none placeholder:text-fg-muted',
-                'focus:border-accent focus:ring-2 focus:ring-accent/30',
-              ].join(' ')}
+              placeholder="Search posts or paste a feed URL…"
+              class="w-full rounded-lg border border-border bg-surface py-2 pl-9 pr-3 text-sm text-fg outline-none placeholder:text-fg-muted focus:border-accent focus:ring-2 focus:ring-accent/30"
               onInput={(event: Event) =>
                 onSearch((event.target as HTMLInputElement).value)
               }
-              onKeyDown={(event: KeyboardEvent) => {
-                if (event.key === 'Enter') {
-                  event.preventDefault();
-                }
-              }}
             />
           </div>
 
           {syncing ? (
-            <span class="hidden sm:inline-flex items-center text-fg-muted">
+            <span class="hidden sm:inline-flex items-center text-fg-muted" title="Syncing">
               <Icon node={ICONS.loader} size={16} className="spin" />
             </span>
           ) : null}
 
           <button
             type="button"
-            class={[
-              'inline-flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium',
+            class={
               canCreate
-                ? 'bg-accent text-accent-contrast hover:opacity-90'
-                : 'bg-surface text-fg-muted border border-border',
-            ].join(' ')}
+                ? 'inline-flex items-center gap-1.5 rounded-lg bg-accent px-3 py-2 text-sm font-medium text-accent-contrast hover:opacity-90'
+                : 'inline-flex items-center gap-1.5 rounded-lg border border-border px-3 py-2 text-sm text-fg-muted'
+            }
             onClick={onCreate}
-            title={canCreate ? 'Create a post' : 'Sign in to create a post'}
+            disabled={!canCreate}
+            title={canCreate ? 'Create post' : 'Sign in to create posts'}
           >
             <Icon node={ICONS.plus} size={16} />
             <span class="hidden sm:inline">Create</span>
