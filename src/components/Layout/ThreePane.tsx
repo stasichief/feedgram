@@ -70,7 +70,7 @@ export class ThreePane extends Component<ThreePaneProps> {
 
         <div class="mx-auto flex w-full max-w-[1600px]">
           {/* Desktop left pane */}
-          <aside class="sticky top-14 hidden h-[calc(100vh-3.5rem)] w-60 shrink-0 overflow-y-auto border-r border-border lg:block">
+          <aside class="sticky top-[calc(3.5rem+env(safe-area-inset-top,0px))] hidden h-[calc(100dvh-3.5rem-env(safe-area-inset-top,0px))] w-60 shrink-0 overflow-y-auto border-r border-border lg:block">
             <LeftNav {...navProps} variant="sidebar" />
           </aside>
 
@@ -80,7 +80,7 @@ export class ThreePane extends Component<ThreePaneProps> {
           </main>
 
           {/* Desktop right pane */}
-          <aside class="sticky top-14 hidden h-[calc(100vh-3.5rem)] w-72 shrink-0 overflow-y-auto lg:block">
+          <aside class="sticky top-[calc(3.5rem+env(safe-area-inset-top,0px))] hidden h-[calc(100dvh-3.5rem-env(safe-area-inset-top,0px))] w-72 shrink-0 overflow-y-auto lg:block">
             <RightSidebar
               trending={trending}
               feedCount={feedCount}

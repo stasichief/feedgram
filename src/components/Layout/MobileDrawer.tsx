@@ -53,6 +53,7 @@ export class MobileDrawer extends Component<MobileDrawerProps> {
           class={[
             'absolute inset-y-0 left-0 flex w-[17rem] max-w-[85vw] flex-col',
             'border-r border-border bg-bg shadow-xl transition-transform duration-200',
+            'pt-[env(safe-area-inset-top,0px)] pb-[env(safe-area-inset-bottom,0px)]',
             open ? 'translate-x-0' : '-translate-x-full',
           ].join(' ')}
           role="dialog"
