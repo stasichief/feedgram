@@ -67,10 +67,8 @@ jobs:
       - name: Generate Tauri application icons
         run: npx tauri icon src-tauri/app-icon.png
 
-      # Debug builds use Android's debug signing key, so the APK can be
-      # installed for testing without configuring a private release keystore.
-      - name: Build debug APK
-        run: npm run tauri:android:build -- --debug
+      - name: Build optimized release APKs
+        run: npm run tauri:android:build -- --split-per-abi
 
       - name: Confirm APK output
         run: |
