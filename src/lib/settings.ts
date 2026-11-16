@@ -20,6 +20,7 @@ export const DEFAULT_SETTINGS: Settings = {
   userAgentOverride: '',
   siteUrl: '',
   showComments: true,
+  ignoreInvalidCerts: false,
 };
 
 function sanitizeCustomTabs(value: unknown): CustomTab[] {

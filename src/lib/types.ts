@@ -1,6 +1,6 @@
 /** Shared domain types for feedgram. */
 
-export type ThemeName = 'light' | 'sepia' | 'oled';
+export type ThemeName = 'light' | 'sepia' | 'oled' | 'lemmy';
 export type FontFamily = 'sans' | 'serif';
 export type LineWidth = 'narrow' | 'medium' | 'wide';
 export type SortMode = 'active' | 'new' | 'hot' | 'top';
@@ -44,6 +44,11 @@ export interface Settings {
   userAgentOverride: string;
   siteUrl: string;
   showComments: boolean;
+  /**
+   * When true, native (Tauri) HTTP requests accept invalid TLS certificates
+   * (e.g. self-signed CORS proxies). Has no effect in the pure browser build.
+   */
+  ignoreInvalidCerts: boolean;
 }
 
 export interface Feed {

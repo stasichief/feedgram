@@ -2,7 +2,7 @@ import { Component } from 'inferno';
 import { THEMES } from '../../styles/themes';
 import type { ThemeName } from '../../lib/types';
 
-const THEME_ORDER: ThemeName[] = ['light', 'sepia', 'oled'];
+const THEME_ORDER: ThemeName[] = ['light', 'sepia', 'oled', 'lemmy'];
 
 export interface ThemePickerProps {
   value: ThemeName;
@@ -17,7 +17,7 @@ export class ThemePicker extends Component<ThemePickerProps> {
     return (
       <div class="flex flex-col gap-2">
         <span class="text-sm font-medium text-fg">Theme</span>
-        <div class="grid grid-cols-3 gap-2">
+        <div class="grid grid-cols-2 gap-2 sm:grid-cols-4">
           {THEME_ORDER.map((name) => {
             const tokens = THEMES[name];
             const active = value === name;
