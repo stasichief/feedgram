@@ -38,9 +38,15 @@ body {
   line-height: 1.55;
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
+  /* Horizontal + bottom insets for gesture nav / cutouts. Top is handled
+     by the sticky header so its background still fills the status bar. */
+  padding-left: env(safe-area-inset-left, 0px);
+  padding-right: env(safe-area-inset-right, 0px);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
 }
 
 #root {
+  min-height: 100dvh;
   min-height: 100vh;
 }
 
