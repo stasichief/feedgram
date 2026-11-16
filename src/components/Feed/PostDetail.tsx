@@ -28,6 +28,10 @@ export class PostDetail extends Component<PostDetailProps> {
   private mounted = false;
   /** Article image opened in the lightbox. */
   private lightbox: string | null = null;
+  /** Touch origin for the “swipe left to collapse” gesture. */
+  private touchStartX = 0;
+  private touchStartY = 0;
+  private trackingTouch = false;
 
   componentDidMount(): void {
     this.mounted = true;
@@ -37,6 +41,32 @@ export class PostDetail extends Component<PostDetailProps> {
   componentWillUnmount(): void {
     this.mounted = false;
   }
+
+  private onTouchStart = (event: TouchEvent): void => {
+    if (event.touches.length !== 1) {
+      this.trackingTouch = false;
+      return;
+    }
+    this.touchStartX = event.touches[0].clientX;
+    this.touchStartY = event.touches[0].clientY;
+    this.trackingTouch = true;
+  };
+
+  private onTouchEnd = (event: TouchEvent): void => {
+    if (!this.trackingTouch || event.changedTouches.length !== 1) {
+      this.trackingTouch = false;
+      return;
+    }
+    const touch = event.changedTouches[0];
+    const dx = touch.clientX - this.touchStartX;
+    const dy = touch.clientY - this.touchStartY;
+    this.trackingTouch = false;
+
+    // Left swipe: mostly horizontal, far enough to not fight vertical scroll.
+    if (dx < -72 && Math.abs(dx) > Math.abs(dy) * 1.6) {
+      this.props.onClose();
+    }
+  };
 
   componentDidUpdate(previousProps: PostDetailProps): void {
     if (previousProps.postId !== this.props.postId) {
@@ -87,7 +117,14 @@ export class PostDetail extends Component<PostDetailProps> {
     const body = article?.html ?? contentHtml;
 
     return (
-      <section class="fade-in border-t border-border bg-bg px-3 py-4 sm:px-5">
+      <section
+        class="fade-in border-t border-border bg-bg px-3 py-4 sm:px-5"
+        onTouchStart={this.onTouchStart}
+        onTouchEnd={this.onTouchEnd}
+        onTouchCancel={() => {
+          this.trackingTouch = false;
+        }}
+      >
         <div class="mx-auto max-w-[var(--content-width)]">
           <div class="mb-3 flex items-center justify-between gap-3">
             <h2 class="truncate text-sm font-semibold text-fg">{title}</h2>
