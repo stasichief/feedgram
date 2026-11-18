@@ -309,7 +309,10 @@ export async function setMeta(key: string, value: unknown): Promise<void> {
 
 export async function clearCache(): Promise<void> {
   const db = await getDB();
-  const tx = db.transaction(['posts', 'articles', 'comments', 'meta'], 'readwrite');
+  const tx = db.transaction(['feeds', 'posts', 'articles', 'comments', 'meta'], 'readwrite');
+  const feedStore = tx.objectStore('feeds');
+  const feeds = await feedStore.getAll();
+  await Promise.all(feeds.map((feed) => feedStore.put({ ...feed, etag: undefined, lastModified: undefined })));
   const meta = tx.objectStore('meta');
   const metaKeys = await meta.getAllKeys();
   await Promise.all(metaKeys.filter((key) => String(key).startsWith('comments:')).map((key) => meta.delete(key)));

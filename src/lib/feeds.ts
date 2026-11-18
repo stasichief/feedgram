@@ -48,6 +48,7 @@ export async function fetchFeed(
       };
     });
 
+    feed.cachedPostCount = new Set([...known.map((post) => post.id), ...posts.map((post) => post.id)]).size;
     await putFeed(feed);
     await putPosts(posts);
     return { feed, posts, notModified: false };
@@ -62,7 +63,13 @@ export async function fetchFeed(
   const result = await proxyFetch(feedId, { headers });
 
   if (result.status === 304 && existing) {
+    const cached = await getPostsForFeeds([feedId]);
+    if (cached.length === 0 && (existing.cachedPostCount === undefined || existing.cachedPostCount > 0)) {
+      if (options.force) throw new Error('Feed returned HTTP 304 even though no posts are cached locally.');
+      return fetchFeed(feedId, { force: true });
+    }
     const updated = { ...existing, lastFetchedAt: Date.now(), lastError: undefined };
+    updated.cachedPostCount = cached.length;
     await putFeed(updated);
     return { feed: updated, posts: [], notModified: true };
   }
@@ -98,6 +105,7 @@ export async function fetchFeed(
     };
   });
 
+  feed.cachedPostCount = new Set([...known.map((post) => post.id), ...posts.map((post) => post.id)]).size;
   await putFeed(feed);
   await putPosts(posts);
 

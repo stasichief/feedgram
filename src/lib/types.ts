@@ -76,6 +76,8 @@ export interface Feed {
   lastError?: string;
   etag?: string;
   lastModified?: string;
+  /** Number of locally cached posts from the most recent successful fetch. */
+  cachedPostCount?: number;
   /** Optional user-supplied JSON endpoint that returns comments for a post. */
   commentEndpoint?: string;
   /** Detected source kind, used for comment endpoints + posting. */

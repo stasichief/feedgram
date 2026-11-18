@@ -14,6 +14,7 @@ import type { Feed } from '../../lib/types';
 export interface DataManagementProps {
   feeds: Feed[];
   onReset: () => void;
+  onRefreshAll: () => Promise<void>;
   retentionAmount: number;
   retentionUnit: 'days' | 'months' | 'years';
   onRetentionAmount: (value: number) => void;
@@ -85,7 +86,17 @@ export class DataManagement extends Component<DataManagementProps> {
     }
     this.message = `${labels[category]} cleared.`;
     await this.refreshUsage();
-    this.props.onReset();
+    if (category === 'posts') await this.props.onRefreshAll();
+    else this.props.onReset();
+  }
+
+  private async clearAllCachedPosts(): Promise<void> {
+    await clearCache();
+    this.message = 'Cache cleared; refreshing feeds…';
+    await this.refreshUsage();
+    await this.props.onRefreshAll();
+    this.message = 'Cached posts cleared; feed refresh finished.';
+    this.forceUpdate();
   }
 
   private async runRetentionCleanup(): Promise<void> {
@@ -116,7 +127,7 @@ export class DataManagement extends Component<DataManagementProps> {
           const posts = await getSavedPosts();
           downloadTextFile('feedgram-bookmarks.opml', exportBookmarksOPML(posts), 'text/x-opml');
         }}>Export bookmarks OPML</Button>
-        <Button icon="trash" variant="danger" onClick={() => void clearCache().then(() => { onReset(); return this.refreshUsage(); })}>Clear all cached posts</Button>
+        <Button icon="trash" variant="danger" onClick={() => void this.clearAllCachedPosts()}>Clear all cached posts</Button>
         <Button icon="refreshCw" variant="danger" onClick={() => {
           if (window.confirm('Reset Feedgram data and remove all authentication tokens?')) {
             void (async () => {

@@ -471,6 +471,7 @@ export class App extends Component<Record<string, never>, AppState> {
                 <Settings
                   feeds={subscribedFeeds}
                   onFeedsChanged={this.handleFeedsChanged}
+                  onRefreshAll={() => this.refresh('all')}
                 />
               )}
             />

@@ -24,6 +24,20 @@ export class Feeds extends Component<FeedsProps> {
   private touchStartY = 0;
   private touchStartX = 0;
   private canRefresh = false;
+  private mouseStartX = 0;
+  private mouseStartY = 0;
+  private canMouseRefresh = false;
+  private pullDistance = 0;
+
+  componentDidMount(): void {
+    window.addEventListener('mousemove', this.handleMouseMove);
+    window.addEventListener('mouseup', this.handleMouseUp);
+  }
+
+  componentWillUnmount(): void {
+    window.removeEventListener('mousemove', this.handleMouseMove);
+    window.removeEventListener('mouseup', this.handleMouseUp);
+  }
 
   private handleTouchStart = (event: TouchEvent): void => {
     const target = event.target as HTMLElement;
@@ -38,6 +52,38 @@ export class Feeds extends Component<FeedsProps> {
     const dx = touch ? touch.clientX - this.touchStartX : 0;
     if (this.canRefresh && dy > 76 && dy > Math.abs(dx) * 1.25) this.props.onRefresh();
     this.canRefresh = false;
+  };
+
+  private handleMouseDown = (event: MouseEvent): void => {
+    const target = event.target as Element;
+    this.canMouseRefresh = event.button === 0 && window.scrollY <= 2 &&
+      !target.closest('input, textarea, select, button, a, [data-no-refresh]');
+    if (!this.canMouseRefresh) return;
+    this.mouseStartX = event.clientX;
+    this.mouseStartY = event.clientY;
+  };
+
+  private handleMouseMove = (event: MouseEvent): void => {
+    if (!this.canMouseRefresh || (event.buttons & 1) === 0) return;
+    const distance = event.clientY - this.mouseStartY;
+    if (distance <= 0) return;
+    if (distance > 8) event.preventDefault();
+    const next = Math.min(96, distance);
+    if (Math.abs(next - this.pullDistance) > 3) {
+      this.pullDistance = next;
+      this.forceUpdate();
+    }
+  };
+
+  private handleMouseUp = (event: MouseEvent): void => {
+    if (!this.canMouseRefresh) return;
+    const dy = event.clientY - this.mouseStartY;
+    const dx = event.clientX - this.mouseStartX;
+    this.canMouseRefresh = false;
+    const shouldRefresh = dy > 76 && dy > Math.abs(dx) * 1.25;
+    this.pullDistance = 0;
+    this.forceUpdate();
+    if (shouldRefresh) this.props.onRefresh();
   };
 
   private async removeFeed(feed: Feed): Promise<void> {
@@ -61,7 +107,8 @@ export class Feeds extends Component<FeedsProps> {
     const { feeds } = this.props;
 
     return (
-      <div onTouchStart={this.handleTouchStart} onTouchEnd={this.handleTouchEnd}>
+      <div class={this.pullDistance > 8 ? 'select-none' : ''} onTouchStart={this.handleTouchStart} onTouchEnd={this.handleTouchEnd} onMouseDown={this.handleMouseDown}>
+        {this.pullDistance > 20 ? <div role="status" class="pointer-events-none fixed left-1/2 top-16 z-50 -translate-x-1/2 rounded-full border border-border bg-surface px-3 py-1.5 text-xs font-medium text-fg shadow-lg">{this.pullDistance >= 76 ? 'Release to refresh' : 'Pull down to refresh'}</div> : null}
         <PageHeader
           title="Subscribed feeds"
           subtitle={`${feeds.length} feed${feeds.length === 1 ? '' : 's'}`}

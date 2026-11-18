@@ -37,6 +37,20 @@ export class FeedPage extends Component<FeedPageProps> {
   private touchStartY = 0;
   private touchStartX = 0;
   private canPullToRefresh = false;
+  private mouseStartX = 0;
+  private mouseStartY = 0;
+  private canMousePullToRefresh = false;
+  private pullDistance = 0;
+
+  componentDidMount(): void {
+    window.addEventListener('mousemove', this.handleMouseMove);
+    window.addEventListener('mouseup', this.handleMouseUp);
+  }
+
+  componentWillUnmount(): void {
+    window.removeEventListener('mousemove', this.handleMouseMove);
+    window.removeEventListener('mouseup', this.handleMouseUp);
+  }
 
   private openPost(post: Post, event: MouseEvent): void {
     void markRead(post.id, true);
@@ -60,6 +74,38 @@ export class FeedPage extends Component<FeedPageProps> {
     const dx = touch ? touch.clientX - this.touchStartX : 0;
     this.canPullToRefresh = false;
     if (dy > 76 && dy > Math.abs(dx) * 1.25) this.props.onRefresh?.();
+  };
+
+  private handleMouseDown = (event: MouseEvent): void => {
+    const target = event.target as Element;
+    this.canMousePullToRefresh = event.button === 0 && window.scrollY <= 2 && Boolean(this.props.onRefresh) &&
+      !target.closest('input, textarea, select, button, a, [data-no-refresh]');
+    if (!this.canMousePullToRefresh) return;
+    this.mouseStartX = event.clientX;
+    this.mouseStartY = event.clientY;
+  };
+
+  private handleMouseMove = (event: MouseEvent): void => {
+    if (!this.canMousePullToRefresh || (event.buttons & 1) === 0) return;
+    const distance = event.clientY - this.mouseStartY;
+    if (distance <= 0) return;
+    if (distance > 8) event.preventDefault();
+    const next = Math.min(96, distance);
+    if (Math.abs(next - this.pullDistance) > 3) {
+      this.pullDistance = next;
+      this.forceUpdate();
+    }
+  };
+
+  private handleMouseUp = (event: MouseEvent): void => {
+    if (!this.canMousePullToRefresh) return;
+    const dy = event.clientY - this.mouseStartY;
+    const dx = event.clientX - this.mouseStartX;
+    this.canMousePullToRefresh = false;
+    const shouldRefresh = dy > 76 && dy > Math.abs(dx) * 1.25;
+    this.pullDistance = 0;
+    this.forceUpdate();
+    if (shouldRefresh) this.props.onRefresh?.();
   };
 
   private async handleVote(post: Post, direction: -1 | 1): Promise<void> {
@@ -100,7 +146,8 @@ export class FeedPage extends Component<FeedPageProps> {
       };
     });
 
-    return <div onTouchStart={this.handleTouchStart} onTouchEnd={this.handleTouchEnd}>
+    return <div class={this.pullDistance > 8 ? 'select-none' : ''} onTouchStart={this.handleTouchStart} onTouchEnd={this.handleTouchEnd} onMouseDown={this.handleMouseDown}>
+      {this.pullDistance > 20 ? <div role="status" class="pointer-events-none fixed left-1/2 top-16 z-50 -translate-x-1/2 rounded-full border border-border bg-surface px-3 py-1.5 text-xs font-medium text-fg shadow-lg">{this.pullDistance >= 76 ? 'Release to refresh' : 'Pull down to refresh'}</div> : null}
       {header as never}
       <SortBar sort={sort} onSort={onSort} />
       {loading ? <LoadingState /> : error ? <ErrorState message={error} onRetry={onRetry} /> : cards.length === 0 ? (

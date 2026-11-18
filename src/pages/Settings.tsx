@@ -21,6 +21,7 @@ import type {
 export interface SettingsPageProps {
   feeds: Feed[];
   onFeedsChanged: () => void;
+  onRefreshAll: () => Promise<void>;
 }
 
 /** A titled settings section. */
@@ -155,6 +156,7 @@ export class Settings extends Component<SettingsPageProps> {
             <DataManagement
               feeds={feeds}
               onReset={onFeedsChanged}
+              onRefreshAll={this.props.onRefreshAll}
               retentionAmount={settings.retentionAmount}
               retentionUnit={settings.retentionUnit}
               onRetentionAmount={(retentionAmount) => this.update({ retentionAmount })}
