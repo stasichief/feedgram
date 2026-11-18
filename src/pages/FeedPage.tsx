@@ -8,6 +8,7 @@ import { Icon } from '../components/common/Icon';
 import { ICONS } from '../components/common/icons';
 import { getFeed, getPost } from '../lib/db';
 import { markRead, toggleSaved, vote } from '../lib/feeds';
+import { getActiveHomeTab, savePostReturnContext } from '../lib/navigation';
 import type { Feed, Post, SortMode } from '../lib/types';
 import type { IconName } from '../components/common/icons';
 
@@ -43,10 +44,24 @@ export class FeedPage extends Component<FeedPageProps> {
     Partial<Pick<Post, 'vote' | 'saved' | 'read'>>
   >();
 
-  private openPost(post: Post): void {
+  private openPost(post: Post, event: MouseEvent): void {
     void markRead(post.id, true);
     this.overrides.set(post.id, { ...this.overrides.get(post.id), read: true });
-    window.location.hash = `#/post/${encodeURIComponent(post.id)}`;
+
+    if (
+      event.button === 0 &&
+      !event.metaKey &&
+      !event.ctrlKey &&
+      !event.shiftKey &&
+      !event.altKey &&
+      !event.defaultPrevented
+    ) {
+      savePostReturnContext(
+        window.location.hash,
+        getActiveHomeTab() ?? 'subscribed',
+        window.scrollY,
+      );
+    }
   }
 
   private async handleVote(post: Post, direction: -1 | 1): Promise<void> {
@@ -100,7 +115,7 @@ export class FeedPage extends Component<FeedPageProps> {
         saved: override?.saved ?? post.saved,
         read: override?.read ?? post.read,
         expanded: false,
-        onToggleExpand: () => this.openPost(post),
+        onOpenPost: (event: MouseEvent) => this.openPost(post, event),
         onVote: (direction: -1 | 1) => void this.handleVote(post, direction),
         onToggleSave: () => void this.handleSave(post),
         hasComments:
@@ -112,7 +127,6 @@ export class FeedPage extends Component<FeedPageProps> {
                 feed.commentEndpoint),
           ),
         commentsOpen: false,
-        onToggleComments: () => this.openPost(post),
       };
     });
 

@@ -4,6 +4,10 @@ import { Explore } from './Explore';
 import { FeedPage, PageHeader } from './FeedPage';
 import { Button } from '../components/common/Button';
 import { getSettings, updateSettings } from '../lib/settings';
+import {
+  consumePostReturnContext,
+  setActiveHomeTab,
+} from '../lib/navigation';
 import type { CustomTab, Feed, Post, SortMode } from '../lib/types';
 
 type HomeTab = 'subscribed' | 'explore' | string;
@@ -29,20 +33,40 @@ export class Home extends Component<HomeProps> {
   private tabLabel = '';
   private selectedFeedIds = new Set<string>();
   private touchStartX = 0;
+  private restoreScrollY: number | null = null;
 
   constructor(props: HomeProps) {
     super(props);
-    this.activeTab = props.defaultTab ?? 'subscribed';
+    const returnContext = consumePostReturnContext(window.location.hash);
+    const validTabs = new Set([
+      'subscribed',
+      'explore',
+      ...getSettings().customTabs.map((tab) => tab.id),
+    ]);
+    const restoredTab = returnContext && validTabs.has(returnContext.activeTab)
+      ? returnContext.activeTab
+      : null;
+    this.activeTab = restoredTab ?? props.defaultTab ?? 'subscribed';
+    this.restoreScrollY = returnContext?.scrollY ?? null;
+    setActiveHomeTab(this.activeTab);
+  }
+
+  componentDidMount(): void {
+    if (this.restoreScrollY === null) return;
+    const scrollY = this.restoreScrollY;
+    requestAnimationFrame(() => window.scrollTo({ top: scrollY, behavior: 'auto' }));
   }
 
   componentWillReceiveProps(nextProps: HomeProps): void {
     if (nextProps.defaultTab !== this.props.defaultTab) {
       this.activeTab = nextProps.defaultTab ?? 'subscribed';
+      setActiveHomeTab(this.activeTab);
     }
   }
 
   private selectTab(tab: HomeTab): void {
     this.activeTab = tab;
+    setActiveHomeTab(tab);
     this.addingTab = false;
     window.scrollTo({ top: 0, behavior: 'smooth' });
     this.forceUpdate();

@@ -45,19 +45,16 @@ export interface PostCardProps {
   saved: boolean;
   read: boolean;
   expanded: boolean;
-  onToggleExpand: () => void;
+  onOpenPost: (event: MouseEvent) => void;
   onVote: (direction: -1 | 1) => void;
   onToggleSave: () => void;
-  /** Toggles the comments panel for this post. */
-  onToggleComments?: () => void;
   /** True while the comments panel is visible. */
   commentsOpen?: boolean;
   hasComments: boolean;
 }
 
 /**
- * Lemmy-style post card.
- * The card expands in place to show the full article.
+ * Lemmy-style post card with native links to the standalone post page.
  */
 export class PostCard extends Component<PostCardProps> {
   /** Image shown in the lightbox, or null when it is closed. */
@@ -78,10 +75,9 @@ export class PostCard extends Component<PostCardProps> {
       saved,
       read,
       expanded,
-      onToggleExpand,
+      onOpenPost,
       onVote,
       onToggleSave,
-      onToggleComments,
       commentsOpen,
       hasComments,
     } = this.props;
@@ -144,18 +140,18 @@ export class PostCard extends Component<PostCardProps> {
           <div class="min-w-0 flex-1">
             <div class="flex items-start gap-3">
               <div class="min-w-0 flex-1">
-                <button
-                  type="button"
+                <a
+                  href={`#/post/${encodeURIComponent(this.props.id)}`}
+                  onClick={onOpenPost}
                   class={[
                     'block text-left text-[0.95rem] font-semibold leading-snug',
                     read ? 'text-fg-muted' : 'text-fg',
                     'hover:text-accent',
                   ].join(' ')}
-                  onClick={onToggleExpand}
                   title={title}
                 >
                   {title}
-                </button>
+                </a>
 
                 <div class="mt-1 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-fg-muted">
                   {feedIcon ? (
@@ -218,18 +214,18 @@ export class PostCard extends Component<PostCardProps> {
 
             {/* Action row */}
             <div class="mt-1.5 flex items-center gap-1 text-xs text-fg-muted">
-              <button
-                type="button"
+              <a
+                href={`#/post/${encodeURIComponent(this.props.id)}`}
+                onClick={onOpenPost}
                 class={[
                   'inline-flex items-center gap-1 rounded-md px-1.5 py-1',
                   'hover:bg-surface-alt hover:text-fg',
                   expanded ? 'text-accent font-medium' : '',
                 ].join(' ')}
-                onClick={onToggleExpand}
               >
                 <Icon node={ICONS.bookOpen} size={13} />
-                {expanded ? 'Hide article' : 'Read article'}
-              </button>
+                Read article
+              </a>
 
               {url ? (
                 <a
@@ -258,22 +254,21 @@ export class PostCard extends Component<PostCardProps> {
               </button>
 
               {hasComments ? (
-                <button
-                  type="button"
+                <a
+                  href={`#/post/${encodeURIComponent(this.props.id)}`}
+                  onClick={onOpenPost}
                   class={[
                     'inline-flex items-center gap-1 rounded-md px-1.5 py-1',
                     'hover:bg-surface-alt hover:text-fg',
                     expanded && commentsOpen ? 'text-accent' : '',
                   ].join(' ')}
-                  onClick={onToggleComments}
-                  aria-expanded={expanded && commentsOpen ? 'true' : 'false'}
                   title={
                     expanded && commentsOpen ? 'Collapse comments' : 'Show comments'
                   }
                 >
                   <Icon node={ICONS.messageCircle} size={13} />
                   Comments
-                </button>
+                </a>
               ) : null}
             </div>
           </div>
