@@ -1,5 +1,5 @@
 import { Component } from 'inferno';
-import { FeedPage, PageHeader } from './FeedPage';
+import { FeedPage, PageHeader, RefreshButton } from './FeedPage';
 import type { Feed, Post, SortMode } from '../lib/types';
 
 export interface AllProps {
@@ -45,6 +45,7 @@ export class All extends Component<AllProps> {
           <PageHeader
             title="All"
             subtitle={`${feeds.length} feeds · ${posts.length} posts`}
+            action={<RefreshButton onClick={onRefresh} busy={loading} />}
           />
         }
       />

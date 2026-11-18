@@ -1,5 +1,5 @@
 import { Component } from 'inferno';
-import { FeedPage, PageHeader } from './FeedPage';
+import { FeedPage, PageHeader, RefreshButton } from './FeedPage';
 import { Button } from '../components/common/Button';
 import { Icon } from '../components/common/Icon';
 import { ICONS } from '../components/common/icons';
@@ -105,6 +105,7 @@ export class Explore extends Component<ExploreProps> {
             <PageHeader
               title="Explore"
               subtitle="Discovery sources from around the web"
+              action={<RefreshButton onClick={onRefresh} busy={loading} />}
             />
 
             <div class="mx-4 mt-4 rounded-xl border border-border bg-surface p-4">

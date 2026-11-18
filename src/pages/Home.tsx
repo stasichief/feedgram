@@ -1,7 +1,7 @@
 import { Component } from 'inferno';
 import { Subscribed } from './Subscribed';
 import { Explore } from './Explore';
-import { FeedPage, PageHeader } from './FeedPage';
+import { FeedPage, PageHeader, RefreshButton } from './FeedPage';
 import { Button } from '../components/common/Button';
 import { Input } from '../components/common/Field';
 import { getSettings, updateSettings } from '../lib/settings';
@@ -187,7 +187,7 @@ export class Home extends Component<HomeProps> {
           ) : activeCustomTab ? (
             <FeedPage feeds={filteredFeeds} sort={sort} onSort={onSort} posts={filteredPosts}
               loading={loading} error={error} onRetry={onRefreshExplore} onRefresh={onRefreshExplore} onFeedsChanged={onFeedsChanged} showComments={showComments}
-              header={<PageHeader title={activeCustomTab.label} subtitle={`${filteredFeeds.length} Explore source${filteredFeeds.length === 1 ? '' : 's'}`} />} />
+              header={<PageHeader title={activeCustomTab.label} subtitle={`${filteredFeeds.length} Explore source${filteredFeeds.length === 1 ? '' : 's'}`} action={<RefreshButton onClick={onRefreshExplore} busy={loading} />} />} />
           ) : (
             <Subscribed sort={sort} onSort={onSort} posts={subscribedPosts} feeds={subscribedFeeds}
               loading={loading} error={error} onRefresh={onRefreshSubscribed} onFeedsChanged={onFeedsChanged} showComments={showComments} />

@@ -1,5 +1,5 @@
 import { Component } from 'inferno';
-import { PageHeader } from './FeedPage';
+import { PageHeader, RefreshButton } from './FeedPage';
 import { Button } from '../components/common/Button';
 import { Icon } from '../components/common/Icon';
 import { ICONS } from '../components/common/icons';
@@ -112,6 +112,7 @@ export class Feeds extends Component<FeedsProps> {
         <PageHeader
           title="Subscribed feeds"
           subtitle={`${feeds.length} feed${feeds.length === 1 ? '' : 's'}`}
+          action={<RefreshButton onClick={this.props.onRefresh} busy={this.props.loading} />}
         />
 
         {feeds.length === 0 ? (

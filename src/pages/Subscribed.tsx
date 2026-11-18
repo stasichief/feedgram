@@ -1,5 +1,5 @@
 import { Component } from 'inferno';
-import { FeedPage, PageHeader } from './FeedPage';
+import { FeedPage, PageHeader, RefreshButton } from './FeedPage';
 import { Button } from '../components/common/Button';
 import { Icon } from '../components/common/Icon';
 import { ICONS } from '../components/common/icons';
@@ -95,6 +95,7 @@ export class Subscribed extends Component<SubscribedProps> {
               } posts`}
               action={
                 <div class="flex gap-2">
+                  <RefreshButton onClick={onRefresh} busy={loading} />
                   <Button
                     variant="primary"
                     icon="plus"
