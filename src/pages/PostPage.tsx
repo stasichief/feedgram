@@ -19,13 +19,19 @@ export class PostPage extends Component<PostPageProps> {
   private error = '';
 
   componentDidMount(): void {
+    this.scrollToTop();
     void this.load();
   }
 
   componentDidUpdate(previousProps: PostPageProps): void {
     if (previousProps.match.params.id !== this.props.match.params.id) {
+      this.scrollToTop();
       void this.load();
     }
+  }
+
+  private scrollToTop(): void {
+    window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
   }
 
   private async load(): Promise<void> {
