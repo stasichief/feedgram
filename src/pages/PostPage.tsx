@@ -29,9 +29,19 @@ export class PostPage extends Component<PostPageProps> {
   }
 
   private async load(): Promise<void> {
-    const id = this.props.match.params.id;
-    if (!id) {
+    const encodedId = this.props.match.params.id;
+    if (!encodedId) {
       this.error = 'No post id was provided.';
+      this.loading = false;
+      this.forceUpdate();
+      return;
+    }
+
+    let id: string;
+    try {
+      id = decodeURIComponent(encodedId);
+    } catch {
+      this.error = 'The post link is invalid.';
       this.loading = false;
       this.forceUpdate();
       return;
