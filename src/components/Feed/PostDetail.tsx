@@ -14,6 +14,8 @@ export interface PostDetailProps {
   contentHtml?: string;
   /** When true, `contentHtml` is complete and no extraction is attempted. */
   inline?: boolean;
+  /** Card thumbnail / media attachment, shown when the body HTML omits it. */
+  thumbnail?: string;
   onClose: () => void;
 }
 
@@ -111,10 +113,14 @@ export class PostDetail extends Component<PostDetailProps> {
   }
 
   render() {
-    const { url, title, contentHtml, onClose } = this.props;
+    const { url, title, contentHtml, onClose, thumbnail } = this.props;
     const { article, loading, error } = this;
 
     const body = article?.html ?? contentHtml;
+    const showThumb =
+      Boolean(thumbnail) &&
+      /^https?:/i.test(thumbnail ?? '') &&
+      !(body && thumbnail && body.includes(thumbnail));
 
     return (
       <section
@@ -149,6 +155,26 @@ export class PostDetail extends Component<PostDetailProps> {
               </Button>
             </div>
           </div>
+
+          {showThumb ? (
+            <button
+              type="button"
+              class="mb-4 block w-full overflow-hidden rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/50"
+              onClick={() => {
+                this.lightbox = thumbnail ?? null;
+                this.forceUpdate();
+              }}
+              title="View image"
+              aria-label="View image"
+            >
+              <img
+                src={thumbnail}
+                alt=""
+                class="max-h-[32rem] w-full object-contain"
+                loading="lazy"
+              />
+            </button>
+          ) : null}
 
           {loading ? (
             <div class="flex items-center gap-2 py-8 text-sm text-fg-muted">

@@ -2,13 +2,11 @@ import { Component } from 'inferno';
 import { SortBar } from '../components/Feed/SortBar';
 import { PostCard } from '../components/Feed/PostCard';
 import { LoadingState, ErrorState } from '../components/Feed/PostList';
-import { PostDetail } from '../components/Feed/PostDetail';
-import { CommentsPanel } from '../components/Feed/CommentsPanel';
 import { EmptyState } from '../components/common/Avatar';
 import { Button } from '../components/common/Button';
 import { Icon } from '../components/common/Icon';
 import { ICONS } from '../components/common/icons';
-import { getFeed, getPost, getFeed as findFeed } from '../lib/db';
+import { getFeed, getPost } from '../lib/db';
 import { markRead, toggleSaved, vote } from '../lib/feeds';
 import type { Feed, Post, SortMode } from '../lib/types';
 import type { IconName } from '../components/common/icons';
@@ -36,92 +34,21 @@ export interface FeedPageProps {
 /**
  * Shared feed listing page.
  *
- * Handles sorting, expansion of a post into the full article, voting,
- * bookmarking and the comments panel.
+ * Handles sorting, opening a post on its own page, voting and bookmarking.
  */
 export class FeedPage extends Component<FeedPageProps> {
-  private expandedId: string | null = null;
-  private expandedPost: Post | null = null;
-  private expandedFeed: Feed | null = null;
-  private commentsOpen = true;
-  private touchStartX = 0;
-  private touchStartY = 0;
-
   /** Local overrides so votes and bookmarks update instantly. */
   private overrides = new Map<
     string,
     Partial<Pick<Post, 'vote' | 'saved' | 'read'>>
   >();
 
-  private async toggleExpand(post: Post): Promise<void> {
-    if (this.expandedId === post.id) {
-      this.expandedId = null;
-      this.expandedPost = null;
-      this.expandedFeed = null;
-      this.commentsOpen = true;
-      this.forceUpdate();
-      return;
-    }
-
-    this.expandedId = post.id;
-    this.expandedPost = post;
-    this.commentsOpen = true;
-    this.expandedFeed = (await findFeed(post.feedId)) ?? null;
-    this.forceUpdate();
-
+  private openPost(post: Post): void {
     void markRead(post.id, true);
     this.overrides.set(post.id, { ...this.overrides.get(post.id), read: true });
-
-    // Keep the expanded card in view instead of jumping to the bottom of the list.
-    requestAnimationFrame(() => {
-      const nodes = document.querySelectorAll('[data-post-id]');
-      for (let i = 0; i < nodes.length; i += 1) {
-        const node = nodes[i] as HTMLElement;
-        if (node.getAttribute('data-post-id') === post.id) {
-          node.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-          break;
-        }
-      }
-    });
+    window.location.hash = `#/post/${encodeURIComponent(post.id)}`;
   }
 
-  private collapseExpanded(): void {
-    this.expandedId = null;
-    this.expandedPost = null;
-    this.expandedFeed = null;
-    this.commentsOpen = true;
-    this.forceUpdate();
-  }
-  private async toggleComments(post: Post): Promise<void> {
-    if (this.expandedId === post.id) {
-      this.commentsOpen = !this.commentsOpen;
-      this.forceUpdate();
-      return;
-    }
-    this.expandedId = post.id;
-    this.expandedPost = post;
-    this.commentsOpen = true;
-    this.expandedFeed = (await findFeed(post.feedId)) ?? null;
-    this.forceUpdate();
-    void markRead(post.id, true);
-    this.overrides.set(post.id, { ...this.overrides.get(post.id), read: true });
-  }
-  private onArticleTouchStart = (event: TouchEvent): void => {
-    const touch = event.touches[0];
-    if (!touch) return;
-    this.touchStartX = touch.clientX;
-    this.touchStartY = touch.clientY;
-  };
-  private onArticleTouchEnd = (event: TouchEvent): void => {
-    const touch = event.changedTouches[0];
-    if (!touch) return;
-    const dx = touch.clientX - this.touchStartX;
-    const dy = touch.clientY - this.touchStartY;
-    if (dx < -60 && Math.abs(dx) > Math.abs(dy) * 1.5) {
-      event.stopPropagation();
-      this.collapseExpanded();
-    }
-  };
   private async handleVote(post: Post, direction: -1 | 1): Promise<void> {
     await vote(post.id, direction);
     const current = post.vote;
@@ -172,8 +99,8 @@ export class FeedPage extends Component<FeedPageProps> {
         vote: override?.vote ?? post.vote,
         saved: override?.saved ?? post.saved,
         read: override?.read ?? post.read,
-        expanded: this.expandedId === post.id,
-        onToggleExpand: () => void this.toggleExpand(post),
+        expanded: false,
+        onToggleExpand: () => this.openPost(post),
         onVote: (direction: -1 | 1) => void this.handleVote(post, direction),
         onToggleSave: () => void this.handleSave(post),
         hasComments:
@@ -184,8 +111,8 @@ export class FeedPage extends Component<FeedPageProps> {
                 feed.kind === 'lemmy' ||
                 feed.commentEndpoint),
           ),
-        commentsOpen: this.expandedId === post.id && this.commentsOpen,
-        onToggleComments: () => void this.toggleComments(post),
+        commentsOpen: false,
+        onToggleComments: () => this.openPost(post),
       };
     });
 
@@ -210,30 +137,6 @@ export class FeedPage extends Component<FeedPageProps> {
             {cards.map((card) => (
               <div key={card.id} data-post-id={card.id}>
                 <PostCard {...card} />
-
-                {/* The article opens directly underneath its own card. */}
-                {card.expanded && this.expandedPost ? (
-                  <div onTouchStart={this.onArticleTouchStart} onTouchEnd={this.onArticleTouchEnd}>
-                    <PostDetail
-                      postId={card.id}
-                      url={card.url}
-                      title={card.title}
-                      contentHtml={this.expandedPost.contentHtml}
-                      inline={this.expandedPost.inline}
-                      onClose={() => this.collapseExpanded()}
-                    />
-                    {showComments && this.expandedFeed && this.commentsOpen ? (
-                      <CommentsPanel
-                        postId={card.id}
-                        postUrl={card.url}
-                        remoteId={this.expandedPost.remoteId}
-                        feed={this.expandedFeed}
-                        onFeedsChanged={this.props.onFeedsChanged}
-                        onCollapse={() => { this.commentsOpen = false; this.forceUpdate(); }}
-                      />
-                    ) : null}
-                  </div>
-                ) : null}
               </div>
             ))}
           </div>

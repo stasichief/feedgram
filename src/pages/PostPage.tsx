@@ -74,6 +74,8 @@ export class PostPage extends Component<PostPageProps> {
           url={this.post.url}
           title={this.post.title}
           contentHtml={this.post.contentHtml}
+          inline={this.post.inline}
+          thumbnail={this.post.thumbnail}
           onClose={() => history.back()}
         />
         {showComments && this.feed ? (
