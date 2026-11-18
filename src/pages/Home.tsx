@@ -3,6 +3,7 @@ import { Subscribed } from './Subscribed';
 import { Explore } from './Explore';
 import { FeedPage, PageHeader } from './FeedPage';
 import { Button } from '../components/common/Button';
+import { Input } from '../components/common/Field';
 import { getSettings, updateSettings } from '../lib/settings';
 import {
   consumePostReturnContext,
@@ -147,13 +148,11 @@ export class Home extends Component<HomeProps> {
           <section class="mx-4 my-3 rounded-xl border border-border bg-surface p-4" aria-label="Create filtered tab">
             <h2 class="text-sm font-semibold text-fg">Create a filtered tab</h2>
             <p class="mt-1 text-xs text-fg-muted">Choose one or more sources already added in Explore.</p>
-            <input
-              class="mt-3 w-full rounded-lg border border-border bg-bg px-3 py-2 text-sm text-fg"
+            <Input
               value={this.tabLabel}
               maxLength={28}
               placeholder="Tab name, e.g. Design"
-              aria-label="Tab name"
-              onInput={(event: Event) => { this.tabLabel = (event.target as HTMLInputElement).value; }}
+              onInput={(value) => { this.tabLabel = value; this.forceUpdate(); }}
             />
             <div class="mt-3 grid gap-2 sm:grid-cols-2">
               {exploreFeeds.map((feed) => (
@@ -187,7 +186,7 @@ export class Home extends Component<HomeProps> {
               loading={loading} error={error} onRefresh={onRefreshExplore} onFeedsChanged={onFeedsChanged} showComments={showComments} />
           ) : activeCustomTab ? (
             <FeedPage feeds={filteredFeeds} sort={sort} onSort={onSort} posts={filteredPosts}
-              loading={loading} error={error} onRetry={onRefreshExplore} onFeedsChanged={onFeedsChanged} showComments={showComments}
+              loading={loading} error={error} onRetry={onRefreshExplore} onRefresh={onRefreshExplore} onFeedsChanged={onFeedsChanged} showComments={showComments}
               header={<PageHeader title={activeCustomTab.label} subtitle={`${filteredFeeds.length} Explore source${filteredFeeds.length === 1 ? '' : 's'}`} />} />
           ) : (
             <Subscribed sort={sort} onSort={onSort} posts={subscribedPosts} feeds={subscribedFeeds}

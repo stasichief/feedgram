@@ -1,5 +1,5 @@
 import { Component } from 'inferno';
-import { PageHeader, RefreshButton } from './FeedPage';
+import { PageHeader } from './FeedPage';
 import { Button } from '../components/common/Button';
 import { Icon } from '../components/common/Icon';
 import { ICONS } from '../components/common/icons';
@@ -21,6 +21,24 @@ export class Feeds extends Component<FeedsProps> {
   private editing: string | null = null;
   private editEndpoint = '';
   private busy = false;
+  private touchStartY = 0;
+  private touchStartX = 0;
+  private canRefresh = false;
+
+  private handleTouchStart = (event: TouchEvent): void => {
+    const target = event.target as HTMLElement;
+    this.canRefresh = window.scrollY <= 2 && !target.closest('input, textarea, select, button, a');
+    this.touchStartY = event.touches[0]?.clientY ?? 0;
+    this.touchStartX = event.touches[0]?.clientX ?? 0;
+  };
+
+  private handleTouchEnd = (event: TouchEvent): void => {
+    const touch = event.changedTouches[0];
+    const dy = touch ? touch.clientY - this.touchStartY : 0;
+    const dx = touch ? touch.clientX - this.touchStartX : 0;
+    if (this.canRefresh && dy > 76 && dy > Math.abs(dx) * 1.25) this.props.onRefresh();
+    this.canRefresh = false;
+  };
 
   private async removeFeed(feed: Feed): Promise<void> {
     this.busy = true;
@@ -40,14 +58,13 @@ export class Feeds extends Component<FeedsProps> {
   }
 
   render() {
-    const { feeds, onRefresh, loading } = this.props;
+    const { feeds } = this.props;
 
     return (
-      <div>
+      <div onTouchStart={this.handleTouchStart} onTouchEnd={this.handleTouchEnd}>
         <PageHeader
           title="Subscribed feeds"
           subtitle={`${feeds.length} feed${feeds.length === 1 ? '' : 's'}`}
-          action={<RefreshButton onClick={onRefresh} busy={loading} />}
         />
 
         {feeds.length === 0 ? (

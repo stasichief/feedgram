@@ -40,13 +40,11 @@ registerRoute(
 
 // Static build assets.
 registerRoute(
-  ({ request, url }) =>
+  ({ request }) =>
     request.destination === 'script' ||
     request.destination === 'style' ||
     request.destination === 'worker' ||
-    request.destination === 'font' ||
-    url.pathname.endsWith('.png') ||
-    url.pathname.endsWith('.svg'),
+    request.destination === 'font',
   new StaleWhileRevalidate({
     cacheName: 'feedgram-assets',
     plugins: [
@@ -55,6 +53,18 @@ registerRoute(
         maxEntries: 120,
         maxAgeSeconds: 60 * 60 * 24 * 30,
       }),
+    ],
+  }),
+);
+
+// Images shown inline in social-style posts are kept in a separate cache.
+registerRoute(
+  ({ request }) => request.destination === 'image',
+  new CacheFirst({
+    cacheName: 'feedgram-images',
+    plugins: [
+      new CacheableResponsePlugin({ statuses: [0, 200] }),
+      new ExpirationPlugin({ maxEntries: 160, maxAgeSeconds: 60 * 60 * 24 * 30 }),
     ],
   }),
 );

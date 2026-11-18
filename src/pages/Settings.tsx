@@ -7,6 +7,7 @@ import { ProxyConfig } from '../components/Settings/ProxyConfig';
 import { DataManagement } from '../components/Settings/DataManagement';
 import { getSettings, resetSettings, updateSettings } from '../lib/settings';
 import { deleteFeedCascade } from '../lib/db';
+import { Toggle } from '../components/common/Field';
 import type {
   Feed,
   FontFamily,
@@ -14,6 +15,7 @@ import type {
   ProxyMode,
   Settings as AppSettings,
   ThemeName,
+  ThemePaletteOverride,
 } from '../lib/types';
 
 export interface SettingsPageProps {
@@ -79,7 +81,11 @@ export class Settings extends Component<SettingsPageProps> {
             <div class="flex flex-col gap-6">
               <ThemePicker
                 value={settings.theme}
+                overrides={settings.themeOverrides}
                 onChange={(theme: ThemeName) => this.update({ theme })}
+                onOverride={(theme: ThemeName, palette: ThemePaletteOverride) => this.update({
+                  themeOverrides: { ...getSettings().themeOverrides, [theme]: palette },
+                })}
               />
               <TypographyControls
                 fontFamily={settings.fontFamily}
@@ -89,6 +95,20 @@ export class Settings extends Component<SettingsPageProps> {
                 onFontSize={(fontSize: number) => this.update({ fontSize })}
                 onLineWidth={(lineWidth: LineWidth) => this.update({ lineWidth })}
               />
+              <div class="grid gap-3 sm:grid-cols-2">
+                <label class="flex items-center justify-between rounded-lg border border-border bg-surface px-3 py-2 text-sm text-fg">
+                  Author name color
+                  <input type="color" value={settings.authorColor} class="h-8 w-10 cursor-pointer border-0 bg-transparent p-0"
+                    onInput={(event: Event) => this.update({ authorColor: (event.target as HTMLInputElement).value })} />
+                </label>
+                <label class="flex items-center justify-between rounded-lg border border-border bg-surface px-3 py-2 text-sm text-fg">
+                  Source and URL color
+                  <input type="color" value={settings.sourceColor} class="h-8 w-10 cursor-pointer border-0 bg-transparent p-0"
+                    onInput={(event: Event) => this.update({ sourceColor: (event.target as HTMLInputElement).value })} />
+                </label>
+                <Toggle checked={settings.showAuthorAvatars} label="Show square author avatars when available"
+                  onChange={(showAuthorAvatars) => this.update({ showAuthorAvatars })} />
+              </div>
             </div>
           </Section>
 
@@ -132,7 +152,14 @@ export class Settings extends Component<SettingsPageProps> {
           </Section>
 
           <Section title="Data management" icon="database">
-            <DataManagement feeds={feeds} onReset={onFeedsChanged} />
+            <DataManagement
+              feeds={feeds}
+              onReset={onFeedsChanged}
+              retentionAmount={settings.retentionAmount}
+              retentionUnit={settings.retentionUnit}
+              onRetentionAmount={(retentionAmount) => this.update({ retentionAmount })}
+              onRetentionUnit={(retentionUnit) => this.update({ retentionUnit })}
+            />
           </Section>
 
           <button

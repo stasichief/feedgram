@@ -1,5 +1,5 @@
 import { fetchJson, proxyFetch } from './proxy';
-import { getCommentsForPost, putComments } from './db';
+import { clearCommentsForPost, getCommentsForPost, getMeta, putComments, setMeta } from './db';
 import type { Comment, Feed, FeedKind } from './types';
 
 export type CommentSource = 'none' | 'mastodon' | 'lemmy' | 'bluesky' | 'custom';
@@ -348,12 +348,16 @@ export async function loadComments(
   postId: string,
   feed: Pick<Feed, 'kind' | 'commentEndpoint' | 'id'>,
   post?: { url: string; remoteId?: string },
+  options: { force?: boolean; maxAgeMs?: number } = {},
 ): Promise<Comment[]> {
   const cached = await getCommentsForPost(postId);
-  if (cached.length > 0) return cached;
+  const cacheKey = `comments:${postId}:cachedAt`;
+  const cachedAt = await getMeta<number>(cacheKey);
+  const maxAgeMs = options.maxAgeMs ?? 15 * 60 * 1000;
+  if (!options.force && cachedAt && Date.now() - cachedAt < maxAgeMs) return cached;
 
   const availability = resolveCommentSource(feed, post);
-  if (availability.source === 'none' || !availability.endpoint) return [];
+  if (availability.source === 'none' || !availability.endpoint) return cached;
 
   try {
     let nodes: TreeNode[] = [];
@@ -374,9 +378,11 @@ export async function loadComments(
     }
 
     const comments = flatten(nodes, postId);
+    await clearCommentsForPost(postId);
     await putComments(comments);
+    await setMeta(cacheKey, Date.now());
     return comments;
   } catch {
-    return [];
+    return cached;
   }
 }

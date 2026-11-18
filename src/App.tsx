@@ -149,6 +149,9 @@ export class App extends Component<Record<string, never>, AppState> {
       fontFamily: settings.fontFamily,
       fontSize: settings.fontSize,
       lineWidth: settings.lineWidth,
+      themeOverrides: settings.themeOverrides,
+      authorColor: settings.authorColor,
+      sourceColor: settings.sourceColor,
     });
   }
 

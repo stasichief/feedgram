@@ -5,6 +5,10 @@ const STORAGE_KEY = 'feedgram.settings.v1';
 
 export const DEFAULT_SETTINGS: Settings = {
   theme: 'light',
+  themeOverrides: {},
+  authorColor: '#2563eb',
+  sourceColor: '#0f766e',
+  showAuthorAvatars: true,
   fontFamily: 'sans',
   fontSize: 16,
   lineWidth: 'medium',
@@ -20,6 +24,8 @@ export const DEFAULT_SETTINGS: Settings = {
   userAgentOverride: '',
   siteUrl: '',
   showComments: true,
+  retentionAmount: 6,
+  retentionUnit: 'months',
   ignoreInvalidCerts: false,
 };
 
@@ -56,6 +62,15 @@ function readStoredSettings(): Settings {
       ...DEFAULT_SETTINGS,
       ...parsed,
       theme: (theme as Settings['theme']) ?? DEFAULT_SETTINGS.theme,
+      themeOverrides:
+        parsed.themeOverrides && typeof parsed.themeOverrides === 'object'
+          ? parsed.themeOverrides
+          : {},
+      authorColor: typeof parsed.authorColor === 'string' ? parsed.authorColor : DEFAULT_SETTINGS.authorColor,
+      sourceColor: typeof parsed.sourceColor === 'string' ? parsed.sourceColor : DEFAULT_SETTINGS.sourceColor,
+      showAuthorAvatars: typeof parsed.showAuthorAvatars === 'boolean' ? parsed.showAuthorAvatars : true,
+      retentionAmount: typeof parsed.retentionAmount === 'number' ? Math.max(1, parsed.retentionAmount) : DEFAULT_SETTINGS.retentionAmount,
+      retentionUnit: ['days', 'months', 'years'].includes(String(parsed.retentionUnit)) ? parsed.retentionUnit! : DEFAULT_SETTINGS.retentionUnit,
       exploreFeedUrls: Array.isArray(parsed.exploreFeedUrls)
         ? parsed.exploreFeedUrls
         : DEFAULT_SETTINGS.exploreFeedUrls,

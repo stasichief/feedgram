@@ -41,6 +41,7 @@ export interface InputProps {
   min?: number;
   max?: number;
   step?: number;
+  maxLength?: number;
 }
 
 export class Input extends Component<InputProps> {
@@ -67,7 +68,7 @@ export class Input extends Component<InputProps> {
   };
 
   render() {
-    const { type = 'text', placeholder, id, disabled, mono, min, max, step } =
+    const { type = 'text', placeholder, id, disabled, mono, min, max, step, maxLength } =
       this.props;
 
     return (
@@ -80,6 +81,7 @@ export class Input extends Component<InputProps> {
         min={min}
         max={max}
         step={step}
+        maxLength={maxLength}
         class={[
           'w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm',
           'text-fg outline-none focus:border-accent focus:ring-2 focus:ring-accent/30',

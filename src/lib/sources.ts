@@ -114,6 +114,8 @@ interface PostSeed {
   author?: string;
   publishedAt?: number;
   thumbnail?: string;
+  images?: string[];
+  authorAvatar?: string;
   commentCount?: number;
   score?: number;
   remoteId?: string;
@@ -127,10 +129,12 @@ function makePost(feedId: string, seed: PostSeed): Post {
     feedId,
     title: seed.title.trim() || '(untitled)',
     url: seed.url ?? '',
-    excerpt: truncate(seed.excerpt ?? ''),
+    excerpt: seed.inline ? (seed.excerpt ?? '') : truncate(seed.excerpt ?? ''),
     author: seed.author,
+    authorAvatar: seed.authorAvatar,
     publishedAt: seed.publishedAt ?? Date.now(),
     thumbnail: seed.thumbnail,
+    images: seed.images,
     commentCount: seed.commentCount,
     score: seed.score,
     remoteId: seed.remoteId,
@@ -322,6 +326,15 @@ interface MastodonTarget {
  *   https://defcon.social             (trending posts)
  */
 export function parseMastodonTarget(input: string): MastodonTarget | null {
+  const handle = /^@?([^@/\s]+)@([^@/\s]+)$/.exec(input.trim());
+  if (handle) {
+    return {
+      origin: `https://${handle[2].toLowerCase()}`,
+      account: `${handle[1]}@${handle[2].toLowerCase()}`,
+      kind: 'account',
+    };
+  }
+
   let url: URL;
   try {
     url = new URL(normaliseUrl(input));
@@ -330,8 +343,8 @@ export function parseMastodonTarget(input: string): MastodonTarget | null {
   }
 
   const segments = url.pathname.split('/').filter(Boolean);
-  if (segments[0] === '@' && segments[1]) {
-    return { origin: url.origin, account: segments[1], kind: 'account' };
+  if (segments[0]?.startsWith('@') && segments[0].length > 1) {
+    return { origin: url.origin, account: segments[0].slice(1), kind: 'account' };
   }
   if (segments[0] === 'users' && segments[1]) {
     return { origin: url.origin, account: segments[1], kind: 'account' };
@@ -350,8 +363,11 @@ function mastodonStatus(feedId: string, status: any): Post | null {
   const url = String(entry.url ?? entry.uri ?? '');
   const account = entry.account ?? {};
 
-  const media = Array.isArray(entry.media_attachments)
-    ? entry.media_attachments.find((item: any) => item?.type === 'image')
+  const images = Array.isArray(entry.media_attachments)
+    ? entry.media_attachments
+        .filter((item: any) => item?.type === 'image')
+        .map((item: any) => String(item?.url ?? item?.preview_url ?? ''))
+        .filter(Boolean)
     : undefined;
 
   const plain = stripHtml(html);
@@ -362,8 +378,10 @@ function mastodonStatus(feedId: string, status: any): Post | null {
     url,
     excerpt: plain,
     author: String(account.display_name || account.acct || account.username || ''),
+    authorAvatar: account.avatar_static ?? account.avatar ?? undefined,
     publishedAt: parseDate(entry.created_at ?? entry.edited_at),
-    thumbnail: media?.preview_url ?? media?.url ?? undefined,
+    thumbnail: images?.[0],
+    images,
     commentCount:
       typeof entry.replies_count === 'number' ? entry.replies_count : undefined,
     score:
@@ -372,7 +390,7 @@ function mastodonStatus(feedId: string, status: any): Post | null {
         : undefined,
     remoteId: entry.id !== undefined ? String(entry.id) : undefined,
     contentHtml: html || undefined,
-    inline: Boolean(html),
+    inline: Boolean(html || images?.length),
   });
 }
 
@@ -385,8 +403,8 @@ async function resolveMastodon(input: string): Promise<ResolvedSource> {
   if (target.kind === 'account' && target.account) {
     const host = new URL(origin).hostname;
     const acct = target.account.includes('@')
-      ? target.account
-      : `${target.account}@${host}`;
+      ? target.account.replace(/^@/, '')
+      : `${target.account.replace(/^@/, '')}@${host}`;
 
     const account = await fetchJson<any>(
       `${origin}/api/v1/accounts/lookup?acct=${encodeURIComponent(acct)}`,
@@ -508,9 +526,16 @@ function activityPubPost(feedId: string, object: any): Post | null {
     author: typeof attributed === 'string' ? attributed.split('/').pop() : undefined,
     publishedAt: parseDate(published),
     thumbnail: typeof image === 'string' ? image : undefined,
+    images: attachments
+      .filter((item: any) => item?.type === 'Document' || item?.mediaType?.startsWith?.('image'))
+      .map((item: any) => String(item?.url ?? item?.href ?? ''))
+      .filter(Boolean),
+    authorAvatar: typeof object.attributedTo === 'object'
+      ? (typeof object.attributedTo.icon?.url === 'string' ? object.attributedTo.icon.url : undefined)
+      : (typeof object.icon?.url === 'string' ? object.icon.url : undefined),
     remoteId: String(object.id ?? ''),
     contentHtml: contentHtml || undefined,
-    inline: Boolean(contentHtml),
+    inline: Boolean(contentHtml || attachments.length),
   });
 }
 
@@ -529,6 +554,14 @@ async function fetchActivityPubDocument(url: string): Promise<any> {
 }
 
 async function resolveActivityPub(input: string): Promise<ResolvedSource> {
+  if (parseMastodonTarget(input)?.kind === 'account') {
+    try {
+      return await resolveMastodon(input);
+    } catch (error) {
+      // Keep non-Mastodon ActivityPub profile URLs usable when their path is /@name.
+      if (!/^https?:\/\//i.test(input.trim())) throw error;
+    }
+  }
   const url = normaliseUrl(input);
 
   try {
@@ -619,10 +652,10 @@ function blueskyPost(feedId: string, item: any): Post | null {
   const author = post.author ?? {};
 
   const embed = post.embed ?? {};
-  const images = embed.images ?? embed.media?.images;
+  const embedImages = embed.images ?? embed.media?.images;
   const thumb =
-    Array.isArray(images) && images[0]
-      ? images[0].thumb ?? images[0].fullsize
+    Array.isArray(embedImages) && embedImages[0]
+      ? embedImages[0].thumb ?? embedImages[0].fullsize
       : embed.external?.thumb ?? undefined;
 
   const rkey = String(post.uri ?? '').split('/').pop();
@@ -635,14 +668,18 @@ function blueskyPost(feedId: string, item: any): Post | null {
     url,
     excerpt: text,
     author: String(author.displayName || `@${handle}`),
+    authorAvatar: typeof author.avatar === 'string' ? author.avatar : undefined,
     publishedAt: parseDate(record.createdAt ?? post.indexedAt),
     thumbnail: typeof thumb === 'string' ? thumb : undefined,
+    images: Array.isArray(embedImages)
+      ? embedImages.map((image: any) => String(image?.fullsize ?? image?.thumb ?? '')).filter(Boolean)
+      : (typeof thumb === 'string' ? [thumb] : []),
     commentCount:
       typeof post.replyCount === 'number' ? post.replyCount : undefined,
     score: typeof post.likeCount === 'number' ? post.likeCount : undefined,
     remoteId: String(post.uri ?? ''),
     contentHtml: text ? `<p>${escapeHtml(text).replace(/\n/g, '<br />')}</p>` : undefined,
-    inline: Boolean(text),
+    inline: Boolean(text || (Array.isArray(embedImages) && embedImages.length)),
   });
 }
 
@@ -724,7 +761,6 @@ export const SOURCE_HINTS: Record<FeedSource, string> = {
   lemmy:
     'Paste a community URL (lemmy.sdf.org/c/humanrights), a user, or a whole instance.',
   activitypub:
-    'Paste a profile or instance URL (defcon.social/explore, mastodon.social/@user).',
+    'Paste a Mastodon profile URL (mastodon.social/@randahl) or handle (@randahl@mastodon.social).',
   bluesky: 'Paste a bsky.app profile URL or a handle like user.bsky.social.',
 };
-

@@ -168,7 +168,7 @@ export async function deleteFeedCascade(feedId: string): Promise<void> {
   const posts = await db.getAllFromIndex('posts', 'by-feedId', feedId);
 
   const tx = db.transaction(
-    ['feeds', 'posts', 'articles', 'comments'],
+    ['feeds', 'posts', 'articles', 'comments', 'meta'],
     'readwrite',
   );
 
@@ -184,6 +184,7 @@ export async function deleteFeedCascade(feedId: string): Promise<void> {
     for (const key of commentKeys) {
       await tx.objectStore('comments').delete(key);
     }
+    await tx.objectStore('meta').delete(`comments:${post.id}:cachedAt`);
   }
 
   await tx.done;
@@ -223,6 +224,58 @@ export async function putComments(comments: Comment[]): Promise<void> {
   await tx.done;
 }
 
+export async function clearCommentsForPost(postId: string): Promise<void> {
+  const db = await getDB();
+  const tx = db.transaction('comments', 'readwrite');
+  const keys = await tx.store.index('by-postId').getAllKeys(postId);
+  await Promise.all(keys.map((key) => tx.store.delete(key)));
+  await tx.done;
+}
+
+export async function getIndexedStoreSizes(): Promise<Record<'feeds' | 'posts' | 'articles' | 'comments' | 'auth', number>> {
+  const db = await getDB();
+  const names = ['feeds', 'posts', 'articles', 'comments', 'auth'] as const;
+  const sizes = {} as Record<(typeof names)[number], number>;
+  for (const name of names) {
+    const values = await db.getAll(name as never) as unknown[];
+    sizes[name] = values.reduce<number>((sum, value) => sum + new TextEncoder().encode(JSON.stringify(value)).byteLength, 0);
+  }
+  return sizes;
+}
+
+export async function clearIndexedStore(store: 'posts' | 'articles' | 'comments'): Promise<void> {
+  const db = await getDB();
+  if (store === 'posts') {
+    await clearCache();
+    return;
+  }
+  if (store === 'comments') {
+    const tx = db.transaction(['comments', 'meta'], 'readwrite');
+    await tx.objectStore('comments').clear();
+    const keys = await tx.objectStore('meta').getAllKeys();
+    await Promise.all(keys.filter((key) => String(key).startsWith('comments:')).map((key) => tx.objectStore('meta').delete(key)));
+    await tx.done;
+    return;
+  }
+  await db.clear(store);
+}
+
+/** Deletes old unsaved posts with their article/comment records; bookmarks are retained. */
+export async function deleteOldPosts(before: number): Promise<number> {
+  const db = await getDB();
+  const old = (await db.getAll('posts')).filter((post) => !post.saved && post.publishedAt < before);
+  const tx = db.transaction(['posts', 'articles', 'comments', 'meta'], 'readwrite');
+  for (const post of old) {
+    await tx.objectStore('posts').delete(post.id);
+    await tx.objectStore('articles').delete(post.id);
+    const keys = await tx.objectStore('comments').index('by-postId').getAllKeys(post.id);
+    for (const key of keys) await tx.objectStore('comments').delete(key);
+    await tx.objectStore('meta').delete(`comments:${post.id}:cachedAt`);
+  }
+  await tx.done;
+  return old.length;
+}
+
 /* ------------------------------------------------------------------- auth */
 
 export async function getAuthSessions(): Promise<AuthSession[]> {
@@ -256,7 +309,10 @@ export async function setMeta(key: string, value: unknown): Promise<void> {
 
 export async function clearCache(): Promise<void> {
   const db = await getDB();
-  const tx = db.transaction(['posts', 'articles', 'comments'], 'readwrite');
+  const tx = db.transaction(['posts', 'articles', 'comments', 'meta'], 'readwrite');
+  const meta = tx.objectStore('meta');
+  const metaKeys = await meta.getAllKeys();
+  await Promise.all(metaKeys.filter((key) => String(key).startsWith('comments:')).map((key) => meta.delete(key)));
   await Promise.all([
     tx.objectStore('posts').clear(),
     tx.objectStore('articles').clear(),

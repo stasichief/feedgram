@@ -1,6 +1,12 @@
 /** Shared domain types for feedgram. */
 
-export type ThemeName = 'light' | 'sepia' | 'parchment' | 'oled';
+export type ThemeName = 'light' | 'sepia' | 'parchment' | 'oled' | 'twitter' | 'feedly' | 'inoreader' | 'miniflux' | 'netnewswire';
+export interface ThemePaletteOverride {
+  background?: string;
+  surface?: string;
+  text?: string;
+  accent?: string;
+}
 export type FontFamily = 'sans' | 'serif';
 export type LineWidth = 'narrow' | 'medium' | 'wide';
 export type SortMode = 'active' | 'new' | 'hot' | 'top';
@@ -28,6 +34,10 @@ export interface CustomTab {
 
 export interface Settings {
   theme: ThemeName;
+  themeOverrides: Partial<Record<ThemeName, ThemePaletteOverride>>;
+  authorColor: string;
+  sourceColor: string;
+  showAuthorAvatars: boolean;
   fontFamily: FontFamily;
   fontSize: number;
   lineWidth: LineWidth;
@@ -44,6 +54,8 @@ export interface Settings {
   userAgentOverride: string;
   siteUrl: string;
   showComments: boolean;
+  retentionAmount: number;
+  retentionUnit: 'days' | 'months' | 'years';
   /**
    * When true, native (Tauri) HTTP requests accept invalid TLS certificates
    * (e.g. self-signed CORS proxies). Has no effect in the pure browser build.
@@ -90,8 +102,11 @@ export interface Post {
   url: string;
   excerpt: string;
   author?: string;
+  authorAvatar?: string;
   publishedAt: number;
   thumbnail?: string;
+  /** All inline images for social posts, including carousel media. */
+  images?: string[];
   /** Remote comments count when the feed provides one. */
   commentCount?: number;
   /** Remote score when the feed provides one. */

@@ -1,5 +1,5 @@
 import { Component } from 'inferno';
-import { FeedPage, PageHeader, RefreshButton } from './FeedPage';
+import { FeedPage, PageHeader } from './FeedPage';
 import { Button } from '../components/common/Button';
 import { Icon } from '../components/common/Icon';
 import { ICONS } from '../components/common/icons';
@@ -81,6 +81,7 @@ export class Subscribed extends Component<SubscribedProps> {
         loading={loading}
         error={error}
         onRetry={onRefresh}
+        onRefresh={onRefresh}
         emptyTitle="No posts yet"
         emptyMessage="Subscribe to a feed to see posts here. Paste any site or feed URL to get started."
         emptyIcon="rss"
@@ -94,7 +95,6 @@ export class Subscribed extends Component<SubscribedProps> {
               } posts`}
               action={
                 <div class="flex gap-2">
-                  <RefreshButton onClick={onRefresh} busy={loading} />
                   <Button
                     variant="primary"
                     icon="plus"
@@ -128,7 +128,7 @@ export class Subscribed extends Component<SubscribedProps> {
                             : this.source === 'lemmy'
                               ? 'https://lemmy.sdf.org/c/humanrights'
                               : this.source === 'activitypub'
-                                ? 'https://defcon.social/explore'
+                                ? 'https://mastodon.social/@randahl'
                                 : 'https://bsky.app/profile/user.bsky.social'
                         }
                         onInput={(value) => {

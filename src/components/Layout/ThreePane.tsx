@@ -3,6 +3,9 @@ import { LeftNav } from './LeftNav';
 import { RightSidebar } from './RightSidebar';
 import { MobileDrawer } from './MobileDrawer';
 import { TopBar } from './TopBar';
+import { NavLink } from 'inferno-router';
+import { Icon } from '../common/Icon';
+import { ICONS } from '../common/icons';
 import type { TrendingEntry } from '../../lib/types';
 
 export interface ThreePaneProps {
@@ -58,7 +61,7 @@ export class ThreePane extends Component<ThreePaneProps> {
     };
 
     return (
-      <div class="min-h-screen bg-bg text-fg">
+      <div class="min-h-screen bg-bg pb-[calc(4.25rem+env(safe-area-inset-bottom,0px))] text-fg lg:pb-0">
         <TopBar
           onToggleSidebar={onToggleSidebar}
           onSearch={onSearch}
@@ -76,7 +79,7 @@ export class ThreePane extends Component<ThreePaneProps> {
 
           {/* Center pane */}
           <main class="min-w-0 flex-1 border-r border-border">
-            <div class="mx-auto w-full max-w-3xl">{children as never}</div>
+            <div class="mx-auto w-full" style="max-width: var(--content-width)">{children as never}</div>
           </main>
 
           {/* Desktop right pane */}
@@ -102,6 +105,19 @@ export class ThreePane extends Component<ThreePaneProps> {
             />
           </div>
         </MobileDrawer>
+
+        <nav class="fixed inset-x-0 bottom-0 z-30 grid grid-cols-4 border-t border-border bg-surface/95 px-2 pt-2 pb-[env(safe-area-inset-bottom,0px)] shadow-lg backdrop-blur lg:hidden" aria-label="Quick navigation">
+          {[
+            { to: '/', label: 'Home', icon: 'house' as const, exact: true },
+            { to: '/feeds', label: 'Feeds', icon: 'rss' as const },
+            { to: '/bookmarks', label: 'Saved', icon: 'bookmark' as const },
+            { to: '/settings', label: 'Settings', icon: 'settings' as const },
+          ].map((entry) => <NavLink key={entry.to} to={entry.to} exact={entry.exact}
+            className="flex flex-col items-center gap-1 rounded-xl px-2 py-1.5 text-[0.68rem] font-medium text-fg-muted"
+            activeClassName="text-accent" onClick={entry.to === '/' ? () => window.scrollTo({ top: 0, behavior: 'smooth' }) : undefined}>
+            <Icon node={ICONS[entry.icon]} size={19} /><span>{entry.label}</span>
+          </NavLink>)}
+        </nav>
       </div>
     );
   }

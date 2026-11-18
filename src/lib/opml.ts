@@ -53,6 +53,14 @@ ${outlines}
 `;
 }
 
+/** Exports saved posts as OPML link outlines; no feed URL is invented for bookmarks. */
+export function exportBookmarksOPML(posts: Array<{ title: string; url: string; excerpt?: string }>): string {
+  const outlines = posts.filter((post) => post.url).map((post) =>
+    `      <outline text="${escapeXml(post.title)}" title="${escapeXml(post.title)}" type="link" htmlUrl="${escapeXml(post.url)}"${post.excerpt ? ` description="${escapeXml(post.excerpt.slice(0, 500))}"` : ''}/>`
+  ).join('\n');
+  return `<?xml version="1.0" encoding="UTF-8"?>\n<opml version="2.0">\n  <head><title>feedgram Bookmarks</title><dateCreated>${new Date().toUTCString()}</dateCreated></head>\n  <body>\n    <outline text="Bookmarks" title="Bookmarks">\n${outlines}\n    </outline>\n  </body>\n</opml>\n`;
+}
+
 export interface OPMLImportResult {
   feeds: Array<{
     url: string;

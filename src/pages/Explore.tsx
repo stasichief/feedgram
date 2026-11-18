@@ -1,5 +1,5 @@
 import { Component } from 'inferno';
-import { FeedPage, PageHeader, RefreshButton } from './FeedPage';
+import { FeedPage, PageHeader } from './FeedPage';
 import { Button } from '../components/common/Button';
 import { Icon } from '../components/common/Icon';
 import { ICONS } from '../components/common/icons';
@@ -95,6 +95,7 @@ export class Explore extends Component<ExploreProps> {
         loading={loading}
         error={error}
         onRetry={onRefresh}
+        onRefresh={onRefresh}
         emptyTitle="Nothing to explore yet"
         emptyMessage="Add a discovery source to see recommended posts from across the web."
         emptyIcon="compass"
@@ -104,7 +105,6 @@ export class Explore extends Component<ExploreProps> {
             <PageHeader
               title="Explore"
               subtitle="Discovery sources from around the web"
-              action={<RefreshButton onClick={onRefresh} busy={loading} />}
             />
 
             <div class="mx-4 mt-4 rounded-xl border border-border bg-surface p-4">
@@ -125,7 +125,7 @@ export class Explore extends Component<ExploreProps> {
                           : this.source === 'lemmy'
                             ? 'https://lemmy.sdf.org/c/humanrights'
                             : this.source === 'activitypub'
-                              ? 'https://defcon.social/explore'
+                              ? 'https://mastodon.social/@randahl'
                               : 'https://bsky.app/profile/user.bsky.social'
                       }
                       onInput={(value) => {
